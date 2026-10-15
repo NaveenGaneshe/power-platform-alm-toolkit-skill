@@ -1,6 +1,6 @@
 # Power Platform ALM Toolkit Skill
 
-**Turn any AI assistant into an enterprise Power Platform architect.** This skill teaches Claude, Codex, GitHub Copilot, Cursor, Gemini and other AI tools to generate production-ready automation for Microsoft Power Platform and Dataverse. Each answer comes with source-controlled scripts, GitHub Actions ALM pipelines, and plain-language runbooks that non-technical admins can follow safely.
+**Turn any AI assistant into an enterprise Power Platform architect — and a live Dataverse operator.** This repo ships two Agent Skills: one teaches Claude, Codex, GitHub Copilot, Cursor, Gemini and other AI tools to generate production-ready ALM automation (source-controlled scripts, GitHub Actions pipelines, plain-language runbooks); the other runs live Dataverse queries and bulk data operations right now, through the Dataverse MCP server, with a preview and confirmation gate before anything writes.
 
 [![CI](https://github.com/NaveenGaneshe/power-platform-alm-toolkit-skill/actions/workflows/ci.yml/badge.svg)](https://github.com/NaveenGaneshe/power-platform-alm-toolkit-skill/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
@@ -21,6 +21,7 @@ Skill: 1. Capability mapping   → Automation & Workflow Governance, blast radiu
 
 ## Contents
 
+- [Two skills, one toolkit](#two-skills-one-toolkit)
 - [Why this exists](#why-this-exists)
 - [Features](#features)
 - [Supported AI tools](#supported-ai-tools)
@@ -35,16 +36,27 @@ Skill: 1. Capability mapping   → Automation & Workflow Governance, blast radiu
 
 ---
 
+## Two skills, one toolkit
+
+| Skill | What it does | Trigger |
+|---|---|---|
+| [`power-platform-alm-toolkit`](skills/power-platform-alm-toolkit) | **Generates** ALM code for you: scripts, pipelines, and runbooks, ready to commit and run later. | Any Power Platform ALM request — pipelines, bulk-update scripts, role sync, flow governance. |
+| [`pp-data-ops-agent`](skills/pp-data-ops-agent) | **Runs** live Dataverse data operations for you, right now, through the Dataverse MCP server you already have connected — ask-and-answer queries and bulk record updates/deactivations/deletes, with a preview and an explicit confirmation gate before anything writes. | "How many contacts have no email?", "deactivate cases open over 90 days," "show me accounts created last month." |
+
+A third skill, `pp-governance-agent` (live security-role drift, connection-reference health, and
+post-import flow-health checks), is in design — see its [spec](docs/superpowers/specs/2026-10-15-pp-governance-agent-design.md)
+and [plan](docs/superpowers/plans/2026-10-15-pp-governance-agent.md).
+
 ## Why this exists
 
 Power Platform teams live between two worlds:
 
 - **Developers** want everything in Git: solutions unpacked, versions stamped, environments promoted by pipelines, and no hand-clicking in production.
-- **Citizen developers and admins** need to do real operational work every day: bulk-update records, sync users and security roles, switch flows off for a release, produce a data dictionary. They need to do it without writing code, and without the risk of breaking production.
+- **Citizen developers and admins** need to do real operational work every day: bulk-update records, sync users and security roles, switch flows off for a release, produce a data dictionary, or just answer "how many of X do we have." They need to do it without writing code, and without the risk of breaking production.
 
-Generic AI answers fall short of both groups. They invent PAC CLI flags, hardcode environment URLs, skip the "what if this goes wrong?" part, and never write the instructions an admin actually needs.
+Generic AI answers fall short of both groups. They invent PAC CLI flags, hardcode environment URLs, skip the "what if this goes wrong?" part, and never write the instructions an admin actually needs — and when the task is "just tell me the answer right now," they can't act on a live environment at all.
 
-This skill fixes that by giving the AI one consistent, opinionated playbook, the **four-part operational blueprint**, plus verified reference material and tested code to build on.
+This repo fixes that two ways: `power-platform-alm-toolkit` gives the AI one consistent, opinionated playbook, the **four-part operational blueprint**, plus verified reference material and tested code to build code *generation* on. `pp-data-ops-agent` gives it a safe way to *act* live, through the Dataverse MCP server, with the same safety instincts (preview first, confirm before writing, never guess at a schema) carried over into execution instead of just generation.
 
 ### Benefits
 
@@ -167,17 +179,17 @@ Update by running the installer again. Uninstall with `--uninstall` (Bash) or `-
 
 ### Option 3: Manual copy
 
-Copy the folder [`skills/power-platform-alm-toolkit`](skills/power-platform-alm-toolkit) into any directory from the table above. The folder name must stay `power-platform-alm-toolkit`.
+Copy [`skills/power-platform-alm-toolkit`](skills/power-platform-alm-toolkit) and/or [`skills/pp-data-ops-agent`](skills/pp-data-ops-agent) into any directory from the table above. Each folder name must stay exactly as it is in this repo.
 
 ### Option 4: Claude apps (claude.ai, desktop, mobile)
 
-1. Download `power-platform-alm-toolkit.zip` from the [latest release](https://github.com/NaveenGaneshe/power-platform-alm-toolkit-skill/releases/latest).
-2. In Claude, open **Settings → Capabilities**, make sure **Code execution and file creation** is on, then under **Skills** choose **Upload skill** and select the zip.
-3. Toggle the skill on. On Team and Enterprise plans, owners can provision it for the whole organization.
+1. Download `power-platform-alm-toolkit.zip` and/or `pp-data-ops-agent.zip` from the [latest release](https://github.com/NaveenGaneshe/power-platform-alm-toolkit-skill/releases/latest) — each skill is its own zip.
+2. In Claude, open **Settings → Capabilities**, make sure **Code execution and file creation** is on, then under **Skills** choose **Upload skill** and select each zip.
+3. Toggle the skill(s) on. On Team and Enterprise plans, owners can provision them for the whole organization.
 
 ### Option 5: ChatGPT, Gemini, Copilot Studio and other chat assistants
 
-Download `power-platform-alm-toolkit.md` (the whole skill in one file) and `power-platform-alm-toolkit.instructions.md` from the [latest release](https://github.com/NaveenGaneshe/power-platform-alm-toolkit-skill/releases/latest), then follow the [chat assistants guide](docs/chat-assistants.md).
+For each skill you want, download its `<skill-name>.md` (the whole skill in one file) and `<skill-name>.instructions.md` from the [latest release](https://github.com/NaveenGaneshe/power-platform-alm-toolkit-skill/releases/latest), then follow the [chat assistants guide](docs/chat-assistants.md). `pp-data-ops-agent` additionally needs the Dataverse MCP server connected in that tool, where the tool supports MCP — most portable chat assistants don't, so that skill is best used in Claude Code, Claude Desktop, or GitHub Copilot instead.
 
 ### Check it's working
 
@@ -185,7 +197,7 @@ Start a new session and ask:
 
 > *What's the four-part blueprint you use for Power Platform toolkit modules?*
 
-You should get the four section names back. In Codex you can also type `$power-platform-alm-toolkit`, and in Claude Code `/power-platform-alm-toolkit`, to call it explicitly.
+You should get the four section names back — this confirms `power-platform-alm-toolkit`. For `pp-data-ops-agent`, first connect the Dataverse MCP server for an environment (see its [compatibility note](skills/pp-data-ops-agent/SKILL.md)), then ask something like *"how many contacts have no email address?"* — it should run a live query and answer directly, not generate a script. In Codex you can also type `$power-platform-alm-toolkit`, and in Claude Code `/power-platform-alm-toolkit`, to call either skill explicitly by name.
 
 ---
 
@@ -258,20 +270,26 @@ The skill itself needs nothing beyond a supported AI tool. The automation it gen
 
 ```text
 .
-├── skills/power-platform-alm-toolkit/   # ← the skill (this is what gets installed)
-│   ├── SKILL.md                         #   instructions + trigger description
-│   ├── references/                      #   tooling, Dataverse patterns, repo layout, pipelines, runbook template
-│   ├── assets/Dataverse.psm1            #   tested PowerShell 7 module the generated code builds on
-│   └── LICENSE.txt
+├── skills/                               # ← every skill in this repo (each folder is installed separately)
+│   ├── power-platform-alm-toolkit/       #   generates ALM code/pipelines
+│   │   ├── SKILL.md                      #     instructions + trigger description
+│   │   ├── references/                   #     tooling, Dataverse patterns, repo layout, pipelines, runbook template
+│   │   ├── assets/Dataverse.psm1         #     tested PowerShell 7 module the generated code builds on
+│   │   └── LICENSE.txt
+│   └── pp-data-ops-agent/                #   runs live queries/bulk ops through the Dataverse MCP server
+│       ├── SKILL.md
+│       ├── references/data-ops-recipes.md
+│       └── LICENSE.txt
 ├── scripts/
-│   ├── install.sh / install.ps1         # installers for every supported tool
-│   ├── validate.py                      # Agent Skills spec validation
-│   ├── check_templates.py               # parses every YAML/JSON example inside the skill
-│   └── build.py                         # builds the zip + portable bundle into dist/
+│   ├── install.sh / install.ps1         # installers for every supported tool — install every skill above
+│   ├── validate.py                      # Agent Skills spec validation, run across all skills
+│   ├── check_templates.py               # parses every YAML/JSON example inside any skill
+│   └── build.py                         # builds each skill's zip + portable bundle into dist/
 ├── tests/Dataverse.Tests.ps1            # Pester tests (HTTP fully mocked)
-├── docs/                                # chat-assistants.md (ChatGPT, Gemini, Copilot Studio), publishing.md
+├── docs/                                # chat-assistants.md (ChatGPT, Gemini, Copilot Studio), publishing.md,
+│                                         # superpowers/specs|plans (design docs for in-progress skills)
 ├── examples/prompts.md                  # prompt library
-├── evals/evals.json                     # evaluation prompts for improving the skill
+├── evals/evals.json                     # evaluation prompts for improving the skills
 └── .github/workflows/                   # CI (validate, test on Win/macOS/Linux, installer smoke tests) + release
 ```
 
@@ -299,7 +317,7 @@ Invoke-Pester ./tests -Output Detailed
 
 ## Roadmap
 
-- [ ] **`pp-governance-agent` skill** (in design — see [spec](docs/superpowers/specs/2026-10-15-pp-governance-agent-design.md) and [plan](docs/superpowers/plans/2026-10-15-pp-governance-agent.md)): a second skill, triggered by your AI tool, that runs live checks through the Microsoft Dataverse MCP server you already have connected — security role drift between environments, broken/stale connection references, and flows that fail to turn on after a solution import — and proposes fixes that only run on your confirmation. Positioned as a lightweight, zero-setup alternative to the piece of the retired Power Platform CoE Starter Kit that's gone: it finds problems *and* fixes them, not just a dashboard.
+- [ ] **`pp-governance-agent` skill** (in design — see [spec](docs/superpowers/specs/2026-10-15-pp-governance-agent-design.md) and [plan](docs/superpowers/plans/2026-10-15-pp-governance-agent.md)): a third skill, triggered by your AI tool, that runs live checks through the Microsoft Dataverse MCP server you already have connected — security role drift between environments, broken/stale connection references, and flows that fail to turn on after a solution import — and proposes fixes that only run on your confirmation. Positioned as a lightweight, zero-setup alternative to the piece of the retired Power Platform CoE Starter Kit that's gone: it finds problems *and* fixes them, not just a dashboard.
 - [ ] Evaluation runs across the prompts in `evals/` with published results
 - [ ] Ready-made reference modules (data dictionary, flow on/off, role sync) in a companion `pp-ops-toolkit` repo
 - [ ] Azure DevOps pipeline variants

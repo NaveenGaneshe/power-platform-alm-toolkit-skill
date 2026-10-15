@@ -46,7 +46,7 @@ jobs:
         with:
           tag_name: ${{ env.TAG }}
           files: |
-            dist/power-platform-alm-toolkit.zip
-            dist/portable/power-platform-alm-toolkit.md
-            dist/portable/power-platform-alm-toolkit.instructions.md
+            dist/*.zip
+            dist/portable/*.md
+            dist/portable/*.instructions.md
             dist/SHA256SUMS.txt

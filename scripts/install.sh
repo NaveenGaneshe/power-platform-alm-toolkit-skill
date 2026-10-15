@@ -11,7 +11,6 @@
 #   curl -fsSL https://raw.githubusercontent.com/NaveenGaneshe/power-platform-alm-toolkit-skill/main/scripts/install.sh | bash -s -- --tool claude
 set -euo pipefail
 
-SKILL_NAME="power-platform-alm-toolkit"
 REPO_URL="${PP_SKILL_REPO_URL:-https://github.com/NaveenGaneshe/power-platform-alm-toolkit-skill.git}"
 TOOLS=""
 SCOPE="user"
@@ -32,7 +31,9 @@ TOOL is one of:
   gemini    Gemini CLI                          user: ~/.gemini/skills      project: .gemini/skills
   all       claude + agents (covers every tool above without duplicates)
 
-Claude apps (claude.ai / desktop / mobile) don't read local folders: upload dist/${SKILL_NAME}.zip instead.
+Installs every skill under skills/ (currently: power-platform-alm-toolkit, pp-data-ops-agent).
+Claude apps (claude.ai / desktop / mobile) don't read local folders: upload the matching
+dist/<skill-name>.zip instead.
 EOF
 }
 
@@ -68,19 +69,30 @@ if [[ -z "$TOOLS" ]]; then
   fi
 fi
 
-# Locate the skill source: next to this script, or clone the repo to a temp dir.
+# Locate the skills/ folder: next to this script, or clone the repo to a temp dir.
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" 2>/dev/null && pwd || echo "")"
-SRC=""
-if [[ -n "$SCRIPT_DIR" && -f "$SCRIPT_DIR/../skills/$SKILL_NAME/SKILL.md" ]]; then
-  SRC="$(cd "$SCRIPT_DIR/../skills/$SKILL_NAME" && pwd)"
+SKILLS_ROOT=""
+if [[ -n "$SCRIPT_DIR" && -d "$SCRIPT_DIR/../skills" ]]; then
+  SKILLS_ROOT="$(cd "$SCRIPT_DIR/../skills" && pwd)"
 elif [[ "$UNINSTALL" -eq 0 ]]; then
-  command -v git >/dev/null || { echo "git is required to download the skill." >&2; exit 1; }
+  command -v git >/dev/null || { echo "git is required to download the skills." >&2; exit 1; }
   TMP="$(mktemp -d)"
   trap 'rm -rf "$TMP"' EXIT
-  echo "Downloading skill from $REPO_URL ..."
+  echo "Downloading skills from $REPO_URL ..."
   git clone --depth 1 --quiet "$REPO_URL" "$TMP/repo"
-  SRC="$TMP/repo/skills/$SKILL_NAME"
-  [[ -f "$SRC/SKILL.md" ]] || { echo "SKILL.md not found in downloaded repo." >&2; exit 1; }
+  SKILLS_ROOT="$TMP/repo/skills"
+  [[ -d "$SKILLS_ROOT" ]] || { echo "skills/ not found in downloaded repo." >&2; exit 1; }
+fi
+
+SKILL_NAMES=()
+if [[ -n "$SKILLS_ROOT" ]]; then
+  for d in "$SKILLS_ROOT"/*/; do
+    [[ -f "$d/SKILL.md" ]] && SKILL_NAMES+=("$(basename "$d")")
+  done
+elif [[ "$UNINSTALL" -eq 1 ]]; then
+  # Uninstall without a source checkout: fall back to the one skill name known at release time
+  # plus any already-installed folder names, so --uninstall still works from a bare curl pipe.
+  SKILL_NAMES=("power-platform-alm-toolkit" "pp-data-ops-agent")
 fi
 
 target_dir() {
@@ -120,25 +132,30 @@ for tool in "${expanded[@]}"; do
   dir="$(target_dir "$tool")" || { echo "Unknown tool '$tool'. Run with --help." >&2; status=2; continue; }
   case "$seen" in *"|$dir|"*) continue ;; esac
   seen="$seen$dir|"
-  dest="$dir/$SKILL_NAME"
-  if [[ "$UNINSTALL" -eq 1 ]]; then
-    if [[ -d "$dest" ]]; then rm -rf "$dest"; echo "Removed $dest"; else echo "Not installed at $dest"; fi
-    continue
-  fi
-  if [[ -d "$dest" && "$FORCE" -ne 1 ]]; then
-    echo "Updating existing install at $dest"
-  fi
-  mkdir -p "$dir"
-  rm -rf "$dest.tmp"
-  cp -R "$SRC" "$dest.tmp"
-  rm -rf "$dest"
-  mv "$dest.tmp" "$dest"
-  echo "Installed for $tool -> $dest"
+  for name in "${SKILL_NAMES[@]}"; do
+    dest="$dir/$name"
+    if [[ "$UNINSTALL" -eq 1 ]]; then
+      if [[ -d "$dest" ]]; then rm -rf "$dest"; echo "Removed $dest"; else echo "Not installed at $dest"; fi
+      continue
+    fi
+    src="$SKILLS_ROOT/$name"
+    [[ -f "$src/SKILL.md" ]] || { echo "SKILL.md not found for $name." >&2; status=1; continue; }
+    if [[ -d "$dest" && "$FORCE" -ne 1 ]]; then
+      echo "Updating existing install at $dest"
+    fi
+    mkdir -p "$dir"
+    rm -rf "$dest.tmp"
+    cp -R "$src" "$dest.tmp"
+    rm -rf "$dest"
+    mv "$dest.tmp" "$dest"
+    echo "Installed $name for $tool -> $dest"
+  done
 done
 
 if [[ "$UNINSTALL" -eq 0 && "$status" -eq 0 ]]; then
   echo
   echo "Done. Restart your AI tool (or start a new session), then try:"
   echo "  \"Build a toolkit module that turns off all flows in the Invoicing solution before a release, with a test run first.\""
+  echo "  \"How many contacts in my dev environment have no email address?\""
 fi
 exit "$status"

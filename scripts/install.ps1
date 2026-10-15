@@ -24,7 +24,6 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-$SkillName = 'power-platform-alm-toolkit'
 $HomeDir = if ($env:USERPROFILE) { $env:USERPROFILE } else { $HOME }
 
 if (-not $Tool) {
@@ -55,18 +54,18 @@ function Get-TargetDir([string]$t) {
     return (Join-Path $base $rel)
 }
 
-# Locate the skill source next to this script, otherwise download the repo.
-$src = $null
+# Locate the skills/ folder next to this script, otherwise download the repo.
+$skillsRoot = $null
 $tmp = $null
 if ($PSScriptRoot) {
-    $candidate = Join-Path $PSScriptRoot "../skills/$SkillName"
-    if (Test-Path (Join-Path $candidate 'SKILL.md')) { $src = (Resolve-Path $candidate).Path }
+    $candidate = Join-Path $PSScriptRoot '../skills'
+    if (Test-Path $candidate) { $skillsRoot = (Resolve-Path $candidate).Path }
 }
-if (-not $src -and -not $Uninstall) {
+if (-not $skillsRoot -and -not $Uninstall) {
     $tmp = Join-Path ([IO.Path]::GetTempPath()) ("pp-skill-" + [guid]::NewGuid())
     New-Item -ItemType Directory -Path $tmp | Out-Null
     if (Get-Command git -ErrorAction SilentlyContinue) {
-        Write-Host "Downloading skill from $RepoUrl ..."
+        Write-Host "Downloading skills from $RepoUrl ..."
         git clone --depth 1 --quiet $RepoUrl (Join-Path $tmp 'repo')
         if ($LASTEXITCODE -ne 0) { throw "git clone failed for $RepoUrl" }
     }
@@ -78,8 +77,17 @@ if (-not $src -and -not $Uninstall) {
         Expand-Archive -Path $zip -DestinationPath $tmp
         Get-ChildItem $tmp -Directory | Where-Object Name -like '*-main' | Rename-Item -NewName 'repo'
     }
-    $src = Join-Path $tmp "repo/skills/$SkillName"
-    if (-not (Test-Path (Join-Path $src 'SKILL.md'))) { throw 'SKILL.md not found in downloaded repository.' }
+    $skillsRoot = Join-Path $tmp 'repo/skills'
+    if (-not (Test-Path $skillsRoot)) { throw 'skills/ not found in downloaded repository.' }
+}
+
+$skillNames = @()
+if ($skillsRoot) {
+    $skillNames = @(Get-ChildItem $skillsRoot -Directory | Where-Object { Test-Path (Join-Path $_.FullName 'SKILL.md') } | ForEach-Object { $_.Name })
+}
+elseif ($Uninstall) {
+    # Uninstall without a source checkout: fall back to the names known at release time.
+    $skillNames = @('power-platform-alm-toolkit', 'pp-data-ops-agent')
 }
 
 try {
@@ -88,20 +96,25 @@ try {
         $dir = Get-TargetDir $t
         if ($done.ContainsKey($dir)) { continue }
         $done[$dir] = $true
-        $dest = Join-Path $dir $SkillName
-        if ($Uninstall) {
-            if (Test-Path $dest) { Remove-Item $dest -Recurse -Force; Write-Host "Removed $dest" } else { Write-Host "Not installed at $dest" }
-            continue
+        foreach ($name in $skillNames) {
+            $dest = Join-Path $dir $name
+            if ($Uninstall) {
+                if (Test-Path $dest) { Remove-Item $dest -Recurse -Force; Write-Host "Removed $dest" } else { Write-Host "Not installed at $dest" }
+                continue
+            }
+            $src = Join-Path $skillsRoot $name
+            if (-not (Test-Path (Join-Path $src 'SKILL.md'))) { Write-Warning "SKILL.md not found for $name."; continue }
+            New-Item -ItemType Directory -Force -Path $dir | Out-Null
+            if (Test-Path $dest) { Write-Host "Updating existing install at $dest"; Remove-Item $dest -Recurse -Force }
+            Copy-Item -Path $src -Destination $dest -Recurse
+            Write-Host "Installed $name for $t -> $dest"
         }
-        New-Item -ItemType Directory -Force -Path $dir | Out-Null
-        if (Test-Path $dest) { Write-Host "Updating existing install at $dest"; Remove-Item $dest -Recurse -Force }
-        Copy-Item -Path $src -Destination $dest -Recurse
-        Write-Host "Installed for $t -> $dest"
     }
     if (-not $Uninstall) {
         Write-Host ''
         Write-Host 'Done. Restart your AI tool (or start a new session), then try:'
         Write-Host '  "Build a toolkit module that turns off all flows in the Invoicing solution before a release, with a test run first."'
+        Write-Host '  "How many contacts in my dev environment have no email address?"'
     }
 }
 finally {
