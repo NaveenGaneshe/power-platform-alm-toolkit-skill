@@ -55,7 +55,7 @@ Power Platform teams live between two worlds:
 
 Generic AI answers fall short of both groups. They invent PAC CLI flags, hardcode environment URLs, skip the "what if this goes wrong?" part, and never write the instructions an admin actually needs — and when the task is "just tell me the answer right now," they can't act on a live environment at all.
 
-This repo fixes that two ways: `power-platform-alm-toolkit` gives the AI one consistent, opinionated playbook, the **four-part operational blueprint**, plus verified reference material and tested code to build code *generation* on. `pp-data-ops-agent` gives it a safe way to *act* live, through the Dataverse MCP server, with the same safety instincts (preview first, confirm before writing, never guess at a schema) carried over into execution instead of just generation.
+This repo fixes that two ways: `power-platform-alm-toolkit` gives the AI one consistent, opinionated playbook, the **four-part operational blueprint**, plus verified reference material and tested code to build code *generation* on. The four live agents (`pp-data-ops-agent`, `pp-governance-agent`, `pp-migration-agent`, `pp-integration-agent`) give it a safe way to *act*, through the Dataverse MCP server and `pac`/PowerShell where relevant, with the same safety instincts (preview first, confirm before writing, never guess at a schema, state the rollback path) carried over into execution instead of just generation.
 
 ### Benefits
 
@@ -64,7 +64,7 @@ This repo fixes that two ways: `power-platform-alm-toolkit` gives the AI one con
 | **Developers** | Complete, copy-pasteable files instead of fragments. Environment-agnostic code: the same commit deploys to dev, test and prod. CI/CD that unpacks, versions, checks, packs and deploys out of the box. |
 | **Citizen developers & admins** | Every generated operation gets a simple GitHub form (text boxes, toggles, dropdowns) and a jargon-free runbook, test-run on by default. For one-off questions and quick fixes, `pp-data-ops-agent` skips the form entirely — just ask and get a live answer or a confirm-before-write change. |
 | **Platform / CoE leads** | One consistent safety pattern across every module and every live operation: least-privilege identities, production approval gates (generated code) or explicit per-action confirmation (live agent), before-change snapshots, and an undo path. Easy to review and audit either way. |
-| **Everyone** | Works in the AI tool your team already uses. Two skill folders, every tool. |
+| **Everyone** | Works in the AI tool your team already uses. Five skill folders, every tool. |
 
 ---
 
@@ -116,14 +116,14 @@ The skill uses the open [Agent Skills](https://agentskills.io/specification) for
 | Tool | How it loads the skill | Quick install |
 |---|---|---|
 | **Claude Code** | Native skill (`~/.claude/skills` or `.claude/skills`) | `./scripts/install.sh --tool claude` |
-| **Claude apps** (claude.ai, desktop, mobile) | Uploaded skill (Pro, Max, Team, Enterprise) | Upload `power-platform-alm-toolkit.zip` |
+| **Claude apps** (claude.ai, desktop, mobile) | Uploaded skill (Pro, Max, Team, Enterprise) | Upload whichever skill's zip you want (e.g. `power-platform-alm-toolkit.zip`) — see Installation Option 4 |
 | **OpenAI Codex** (CLI, IDE, desktop app) | Native skill (`~/.agents/skills` or `.agents/skills`) | `./scripts/install.sh --tool codex` |
 | **GitHub Copilot** (VS Code / JetBrains agent mode, CLI, cloud agent) | Native skill (`~/.copilot/skills`, `.github/skills` or `.agents/skills`) | `./scripts/install.sh --tool copilot` |
 | **Cursor** | Native skill (`~/.cursor/skills`, `.cursor/skills` or `.agents/skills`) | `./scripts/install.sh --tool cursor` |
 | **Gemini CLI** | Native skill (`~/.gemini/skills` or `.agents/skills`) | `./scripts/install.sh --tool gemini` |
 | **Windsurf, Cline, OpenCode, Goose, Kiro, Zed, and many more** | Native skill via the [`skills` CLI](https://github.com/vercel-labs/skills) | `npx skills add NaveenGaneshe/power-platform-alm-toolkit-skill` |
 | **ChatGPT** (custom GPT), **Gemini** (Gems), **Microsoft Copilot Studio**, **Claude Projects** | Instructions + knowledge file | See [chat assistants guide](docs/chat-assistants.md) |
-| **Any other model or API** | Paste or attach the portable bundle | Use `power-platform-alm-toolkit.md` as a system prompt / context file |
+| **Any other model or API** | Paste or attach the portable bundle | Use whichever skill's `<skill-name>.md` as a system prompt / context file — see Installation Option 5 |
 
 > **Tip:** `--tool all` installs into `~/.claude/skills` *and* the shared `~/.agents/skills` folder. Between them, those cover Claude Code, Codex, Copilot, Cursor and Gemini CLI without duplicate copies.
 
