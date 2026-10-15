@@ -41,6 +41,8 @@ Then state, as a short table: the **execution layer** (where the code runs, e.g.
 
 Name the blast radius explicitly because it drives every safety decision that follows.
 
+**Dependency tracer.** If the module toggles more than one automation component with a call relationship between them (a parent flow that runs a child flow, a plug-in step that depends on another step having already run), trace that dependency graph explicitly and state the order you'll apply it in both directions: **turning off** goes parent → child (stop the thing that triggers calls before the thing it calls, so nothing invokes a component mid-disable), **turning on** goes child → parent (enable the dependency before the thing that calls it, so the first live invocation doesn't hit something not yet enabled). Get this backwards and a "safe" bulk toggle produces exactly the mid-flight failures it was meant to prevent.
+
 ### 2. Extended Solution Architecture & Schemas
 
 Deliver complete, raw files, not fragments:
@@ -55,7 +57,7 @@ Rules for the code, and why:
 - **Environment-agnostic.** URLs, IDs and names come from parameters, environment variables or the deployment settings file, never hardcoded, so the same commit deploys to dev, test and prod.
 - **Safe by default for anything that writes.** Every mutating script takes `-WhatIf`/`dry_run` and defaults to preview mode. It prints what *would* change and the record count, writes a before-snapshot (CSV/JSON) so the change can be reverted, processes in batches with retry on HTTP 429/503 (honour `Retry-After`), and emits a summary of succeeded and failed records. Citizen developers will press the button without reading the code, so the code has to protect them.
 - **Least privilege.** Name the security role the app user needs. Don't default to System Administrator unless the operation truly requires it, and say so when it does.
-- **Secrets never in files.** Secrets come from GitHub environment secrets or are federated (`pac auth create --githubFederated`).
+- **Secrets never in files.** Secrets come from GitHub environment secrets or are federated (`pac auth create --githubFederated`). If the org already standardizes on Azure Key Vault, reference secrets from there via OIDC federation instead — never duplicate the same secret into both places, and never hardcode either way.
 
 `references/dataverse-patterns.md` has verified request shapes for the common operations (bulk update, paging, role assignment, flow activation, metadata, Custom API creation, connectors, PCF).
 
@@ -70,12 +72,13 @@ Rules for the code, and why:
   - **Environment injection** (deployment settings generated per GitHub environment from `vars`/`secrets`)
   - **Deploy** (test → production, production behind a GitHub environment with required reviewers)
 - If the module is an operation (not a solution), add its `workflow_dispatch` runbook workflow. That form is the citizen developer's control panel.
+- **Optional low-code trigger surface.** If the user wants an in-Power-Platform trigger instead of (or alongside) the GitHub Actions form, offer the Canvas App pattern in `references/low-code-frontend.md`: the app calls a Power Automate flow that fetches the GitHub token from Azure Key Vault and fires a `repository_dispatch` event, so the maker never sees or handles a secret, and the same validated pipeline runs underneath either trigger.
 
 ### 4. End-User & Developer Runbooks
 
 Write a README snippet using the template in `references/runbook-template.md`. Two audiences, two sections:
 
-- **For operators (no code)**: what the button does in one sentence, a table of every input (label, type such as text field / toggle / dropdown, example, what happens if left blank), step-by-step clicks in GitHub (Actions → workflow → Run workflow), how to read the result, and how to undo. Include 2–3 natural-language prompts they could give a Copilot Studio agent or Claude if the module exposes one. Avoid jargon: say "test run that changes nothing" rather than "dry-run idempotent preview", and define any term you can't avoid.
+- **For operators (no code)**: what the button does in one sentence, a table of every input (label, type such as text field / toggle / dropdown, example, what happens if left blank), step-by-step clicks in GitHub (Actions → workflow → Run workflow) — or in the Canvas App, if the module offers one — how to read the result, and how to undo. Include 2–3 natural-language prompts they could give a Copilot Studio agent or Claude if the module exposes one. Avoid jargon: say "test run that changes nothing" rather than "dry-run idempotent preview", and define any term you can't avoid.
 - **For developers**: prerequisites, one-time setup (app registration, application user, GitHub environments, secrets/vars), local run commands, and how to extend the module.
 
 ## Scaling the response
@@ -88,6 +91,7 @@ The blueprint is mandatory, but its depth should match the request. A one-off qu
 - Every PAC command and action input matches `references/tooling.md`.
 - No hardcoded environment URLs, GUIDs or secrets. Placeholder table present if placeholders are used.
 - Mutating operations: dry-run default, before-snapshot, batching, retry, summary, undo path in the runbook.
+- Multi-component toggles: dependency graph traced, parent→child for shutdown and child→parent for startup — not the other way around.
 - Production deploy is gated by a GitHub environment with reviewers.
 - Operator inputs table uses plain language and covers every input in the `workflow_dispatch` block.
 
@@ -100,4 +104,5 @@ The blueprint is mandatory, but its depth should match the request. A one-off qu
 | `references/repo-layout.md` | Placing files in the repo; writing `module.json` |
 | `references/pipeline-template.md` | Writing any GitHub Actions workflow |
 | `references/runbook-template.md` | Writing Part 4 |
+| `references/low-code-frontend.md` | Module offers a Canvas App trigger instead of, or alongside, the GitHub Actions form |
 | `assets/Dataverse.psm1` | Module needs Dataverse Web API access from PowerShell |
