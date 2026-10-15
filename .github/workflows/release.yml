@@ -42,7 +42,7 @@ jobs:
       - run: python scripts/check_templates.py
       - run: python scripts/build.py
       - name: Attach packages to the release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ env.TAG }}
           files: |
