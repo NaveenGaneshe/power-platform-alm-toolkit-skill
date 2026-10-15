@@ -131,6 +131,8 @@ The skill uses the open [Agent Skills](https://agentskills.io/specification) for
 
 ## Installation
 
+Every option below installs all five skills together — the code-generation skill and all four live agents (`pp-data-ops-agent`, `pp-governance-agent`, `pp-migration-agent`, `pp-integration-agent`) — in one step, unless you explicitly pick just one (Option 3, or the `skills` CLI's interactive per-skill picker in Option 1).
+
 ### Option 1: One command with the `skills` CLI (any agent)
 
 Requires Node.js 18+.
@@ -149,7 +151,7 @@ git clone https://github.com/NaveenGaneshe/power-platform-alm-toolkit-skill.git
 cd power-platform-alm-toolkit-skill
 ./scripts/install.sh                     # interactive menu
 ./scripts/install.sh --tool all          # Claude Code + Codex/Copilot/Cursor/Gemini, for your user
-./scripts/install.sh --tool agents --scope project   # commit the skill into the current repo for your whole team
+./scripts/install.sh --tool agents --scope project   # commit all five skills into the current repo for your whole team
 
 # Without cloning:
 curl -fsSL https://raw.githubusercontent.com/NaveenGaneshe/power-platform-alm-toolkit-skill/main/scripts/install.sh | bash -s -- --tool all
