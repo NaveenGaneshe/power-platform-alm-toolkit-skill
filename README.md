@@ -1,6 +1,6 @@
 # Power Platform ALM Toolkit Skill
 
-**Turn any AI assistant into an enterprise Power Platform architect — and a live Dataverse operator.** This repo ships three Agent Skills: one teaches Claude, Codex, GitHub Copilot, Cursor, Gemini and other AI tools to generate production-ready ALM automation (source-controlled scripts, GitHub Actions pipelines, plain-language runbooks); the other two run live Dataverse queries, bulk data operations, and governance checks right now, through the Dataverse MCP server when it's connected — or generate the equivalent query/runbook when it isn't, so neither one requires MCP set up first.
+**Turn any AI assistant into an enterprise Power Platform architect — and a live Dataverse operator.** This repo ships four Agent Skills: one teaches Claude, Codex, GitHub Copilot, Cursor, Gemini and other AI tools to generate production-ready ALM automation (source-controlled scripts, GitHub Actions pipelines, plain-language runbooks); the other three run live Dataverse queries, bulk data operations, governance checks, and environment/tenant/data migrations right now — through the Dataverse MCP server and `pac`/PowerShell when connected and authenticated, or by generating the equivalent query/script/runbook when they aren't, so none of them require that setup first.
 
 [![CI](https://github.com/NaveenGaneshe/power-platform-alm-toolkit-skill/actions/workflows/ci.yml/badge.svg)](https://github.com/NaveenGaneshe/power-platform-alm-toolkit-skill/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
@@ -47,7 +47,7 @@ Skill: 1. Capability mapping   → Automation & Workflow Governance, blast radiu
 
 ### About the Dataverse MCP server (optional, not a prerequisite)
 
-`pp-data-ops-agent` and `pp-governance-agent` both act on a real Dataverse environment through the **Microsoft Dataverse MCP server** when it's available — but **neither one requires it to be set up first**. If you haven't connected it, the skill still completes your request: it generates the equivalent read-only query (or, for a bulk change, a preview query plus the Web API calls to apply it) for you to run yourself, and mentions once that connecting MCP would let it run live next time. To set it up in Claude Code and get live answers instead of generated ones:
+`pp-data-ops-agent`, `pp-governance-agent`, and the record/legacy-data modes of `pp-migration-agent` all act on a real Dataverse environment through the **Microsoft Dataverse MCP server** when it's available — but **none of them require it to be set up first**. If you haven't connected it, the skill still completes your request: it generates the equivalent read-only query (or, for a bulk change, a preview query plus the Web API calls to apply it) for you to run yourself, and mentions once that connecting MCP would let it run live next time. (`pp-migration-agent`'s environment/tenant-copy modes work the same way, but against the `pac` CLI and PowerShell instead of MCP — see its [compatibility note](skills/pp-migration-agent/SKILL.md).) To set it up in Claude Code and get live answers instead of generated ones:
 
 ```bash
 claude mcp add dataverse-dev -t stdio -- npx -y @microsoft/dataverse mcp https://yourorg-dev.crm.dynamics.com
@@ -187,17 +187,17 @@ Update by running the installer again. Uninstall with `--uninstall` (Bash) or `-
 
 ### Option 3: Manual copy
 
-Copy any of [`skills/power-platform-alm-toolkit`](skills/power-platform-alm-toolkit), [`skills/pp-data-ops-agent`](skills/pp-data-ops-agent), or [`skills/pp-governance-agent`](skills/pp-governance-agent) into any directory from the table above. Each folder name must stay exactly as it is in this repo.
+Copy any of [`skills/power-platform-alm-toolkit`](skills/power-platform-alm-toolkit), [`skills/pp-data-ops-agent`](skills/pp-data-ops-agent), [`skills/pp-governance-agent`](skills/pp-governance-agent), or [`skills/pp-migration-agent`](skills/pp-migration-agent) into any directory from the table above. Each folder name must stay exactly as it is in this repo.
 
 ### Option 4: Claude apps (claude.ai, desktop, mobile)
 
-1. Download the zip for whichever skill(s) you want — `power-platform-alm-toolkit.zip`, `pp-data-ops-agent.zip`, `pp-governance-agent.zip` — from the [latest release](https://github.com/NaveenGaneshe/power-platform-alm-toolkit-skill/releases/latest). Each skill is its own zip.
+1. Download the zip for whichever skill(s) you want — `power-platform-alm-toolkit.zip`, `pp-data-ops-agent.zip`, `pp-governance-agent.zip`, `pp-migration-agent.zip` — from the [latest release](https://github.com/NaveenGaneshe/power-platform-alm-toolkit-skill/releases/latest). Each skill is its own zip.
 2. In Claude, open **Settings → Capabilities**, make sure **Code execution and file creation** is on, then under **Skills** choose **Upload skill** and select each zip.
 3. Toggle the skill(s) on. On Team and Enterprise plans, owners can provision them for the whole organization.
 
 ### Option 5: ChatGPT, Gemini, Copilot Studio and other chat assistants
 
-For each skill you want, download its `<skill-name>.md` (the whole skill in one file) and `<skill-name>.instructions.md` from the [latest release](https://github.com/NaveenGaneshe/power-platform-alm-toolkit-skill/releases/latest), then follow the [chat assistants guide](docs/chat-assistants.md). `pp-data-ops-agent` and `pp-governance-agent` work without any MCP connection (they'll generate a query/runbook instead of running live), but get the most value where the tool also supports connecting the Dataverse MCP server — most portable chat assistants don't, so Claude Code, Claude Desktop, or GitHub Copilot get the live experience.
+For each skill you want, download its `<skill-name>.md` (the whole skill in one file) and `<skill-name>.instructions.md` from the [latest release](https://github.com/NaveenGaneshe/power-platform-alm-toolkit-skill/releases/latest), then follow the [chat assistants guide](docs/chat-assistants.md). `pp-data-ops-agent`, `pp-governance-agent`, and `pp-migration-agent` all work without any MCP connection (they'll generate a query/script/runbook instead of running live), but get the most value where the tool also supports connecting the Dataverse MCP server — most portable chat assistants don't, so Claude Code, Claude Desktop, or GitHub Copilot get the live experience. `pp-migration-agent`'s environment/tenant-copy modes additionally need the `pac` CLI or PowerShell available to run live at all, in any tool.
 
 ### Check it's working
 
@@ -205,7 +205,7 @@ Start a new session and ask:
 
 > *What's the four-part blueprint you use for Power Platform toolkit modules?*
 
-You should get the four section names back — this confirms `power-platform-alm-toolkit`. For `pp-data-ops-agent`, ask something like *"how many contacts have no email address?"* — without the Dataverse MCP server connected, it should hand you a ready-to-run query rather than refuse; with it connected (see its [compatibility note](skills/pp-data-ops-agent/SKILL.md)), it runs that query live and answers directly. `pp-governance-agent` works the same way for something like *"audit my security roles."* In Codex you can also type `$power-platform-alm-toolkit`, and in Claude Code `/power-platform-alm-toolkit`, to call any of the three skills explicitly by name.
+You should get the four section names back — this confirms `power-platform-alm-toolkit`. For `pp-data-ops-agent`, ask something like *"how many contacts have no email address?"* — without the Dataverse MCP server connected, it should hand you a ready-to-run query rather than refuse; with it connected (see its [compatibility note](skills/pp-data-ops-agent/SKILL.md)), it runs that query live and answers directly. `pp-governance-agent` works the same way for something like *"audit my security roles."* For `pp-migration-agent`, try *"copy our dev environment into a new sandbox"* — it should state the overwrite warning and ask about a backup before proposing the `pac admin copy` command. In Codex you can also type `$power-platform-alm-toolkit`, and in Claude Code `/power-platform-alm-toolkit`, to call any of the four skills explicitly by name.
 
 ---
 
@@ -288,9 +288,14 @@ The skill itself needs nothing beyond a supported AI tool. The automation it gen
 │   │   ├── SKILL.md
 │   │   ├── references/data-ops-recipes.md
 │   │   └── LICENSE.txt
-│   └── pp-governance-agent/              #   role drift, connection-reference & flow health — live or generated
+│   ├── pp-governance-agent/              #   role drift, connection-reference & flow health — live or generated
+│   │   ├── SKILL.md
+│   │   ├── references/                   #     mcp-tool-reference, check-recipes, admin-api-patterns
+│   │   └── LICENSE.txt
+│   └── pp-migration-agent/               #   environment copy, tenant migration, record & legacy data lift-and-shift
 │       ├── SKILL.md
-│       ├── references/                   #     mcp-tool-reference, check-recipes, admin-api-patterns
+│       ├── references/                   #     same-tenant-copy, cross-tenant-migration, record-lift-shift,
+│       │                                 #     legacy-to-dataverse
 │       └── LICENSE.txt
 ├── scripts/
 │   ├── install.sh / install.ps1         # installers for every supported tool — install every skill above
