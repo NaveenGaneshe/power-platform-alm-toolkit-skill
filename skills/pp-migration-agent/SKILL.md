@@ -1,18 +1,16 @@
 ---
 name: pp-migration-agent
 description: >-
-  Helps with Power Platform "lift and shift" migration: same-tenant environment copy (pac admin
-  copy, a full irreversible overwrite); tenant-to-tenant migration of one or every environment
-  (the TenantToTenant-* PowerShell process, user-mapping file, approval, post-migration
-  checklist, tenant-level settings); copying specific records between two environments; and
-  mapping/loading legacy, non-Dataverse data into Dataverse, with deduplication, upsert matching,
-  field transformations and incremental/repeatable runs. Record and legacy-data modes run live
-  via the Dataverse MCP server if connected, else generate an equivalent script. Every mode
-  states a backup/rollback path before anything destructive runs. Covers the kind of data
-  migration/integration work usually done with a dedicated paid ETL tool. Use for
-  migrate/copy/move/lift-and-shift requests on an environment, tenant, records, or legacy data.
-  Does not handle solution promotion through dev/test/prod — power-platform-alm-toolkit handles
-  that.
+  Power Platform "lift and shift" migration: same-tenant environment copy (pac admin copy, a
+  full overwrite); tenant-to-tenant migration of one or every environment (TenantToTenant-*
+  PowerShell, user-mapping file, approval, tenant-level settings); and copying records or
+  legacy data into Dataverse — single entities or full multi-entity/multi-table packages, with
+  dependency-ordered load, a shared ID crosswalk so relationships resolve correctly, N:N
+  associations, dedup, upsert matching, field transforms, and incremental runs. Record/legacy
+  modes run live via the Dataverse MCP server if connected, else generate a script. Every mode
+  states a backup/rollback path first. Covers data migration/integration work usually done with
+  a paid ETL tool. Use for migrate/copy/move/lift-and-shift requests on an environment, tenant,
+  records, or legacy data. Solution promotion through dev/test/prod is power-platform-alm-toolkit's job, not this one.
 license: MIT (see LICENSE.txt)
 compatibility: >-
   Modes one and two need the pac CLI (mode one) or the
@@ -66,27 +64,29 @@ Read `references/cross-tenant-migration.md` for the exact command sequence. This
 
 ### Mode 3: selective record-level lift & shift
 
-Read `references/record-lift-shift.md` for exact query shapes. Follows the same preview-before-write shape as `pp-data-ops-agent`, but across two environments:
+Read `references/record-lift-shift.md` for exact query shapes. Follows the same preview-before-write shape as `pp-data-ops-agent`, but across two environments, and across multiple related entities when the request spans more than one table.
 
+0. **If more than one entity is in scope (or one entity with relationships to others also in scope), do this as a package, not independent single-entity jobs**: work out the dependency order (which entity's lookups point at which other entity in scope), migrate in that order, and carry one ID crosswalk (source ID → target ID, per entity) across the whole package so later entities' lookups resolve to real target IDs instead of meaningless source-side ones. Handle any many-to-many relationships between in-scope entities last, once both sides exist at the target. See "Multi-entity packages" in the reference file for the exact mechanics — this step governs everything below, applied once per entity in the package.
 1. **Gather (source):** build the read-only `SELECT` for what the user described, call `describe` first to confirm schema, preview row count and a sample.
 2. **Deduplicate the source set against itself**, not only against the target, before matching — report any duplicate groups and ask which to keep.
 3. **Gather (target):** call `describe` on the target too, and check whether matching records might already exist there (ask the user what counts as a duplicate, e.g. an alternate key) so they can decide first-load vs. incremental/upsert.
 4. **Apply any field transformations the mapping needs** (split/combine columns, recode values into Dataverse choice options, computed values) — state the exact rule, don't silently force a bad fit.
 5. **Preview both sides**, then stop — no write yet. This preview is also the rollback data for any record you're about to update (capture its current values), not just a row count.
 6. **If this is a repeatable/incremental job**, agree on a high-water-mark column (e.g. `modifiedon`) so a later run only processes new/changed records instead of re-scanning everything.
-7. **Confirm, then copy**, record by record, in batches, with the same per-record failure handling and summary reporting as `pp-data-ops-agent`. Track every created record's ID in the summary, not just a count — that's what makes a rollback-by-delete possible later.
-8. **No-MCP fallback:** generate the source `SELECT` plus the per-record Web API calls against the target, exactly like `pp-data-ops-agent`'s no-MCP path, just across two environments.
+7. **Confirm, then copy**, record by record, in batches, with the same per-record failure handling and summary reporting as `pp-data-ops-agent`. Resolve any lookup to another in-scope entity via the crosswalk from step 0 before writing it — never write a source-side GUID into a target lookup column. Track every created record's ID in the summary (and in the crosswalk), not just a count — that's what makes a rollback-by-delete possible later.
+8. **No-MCP fallback:** generate the source `SELECT` plus the per-record Web API calls against the target, exactly like `pp-data-ops-agent`'s no-MCP path, just across two environments — and across multiple entities in dependency order if it's a package.
 
 ### Mode 4: legacy system → Dataverse migration
 
 Read `references/legacy-to-dataverse.md` for the mapping and load recipe.
 
+0. **A legacy export is almost always more than one table** (e.g. customers and their orders). If so, work this as a package: identify every table in scope and the foreign keys between them, load in dependency order (referenced tables before the tables that reference them), and carry one ID crosswalk (source key → target record ID, per table) across the whole package so foreign keys resolve to real target IDs instead of meaningless legacy values. See "Multi-table packages" in the reference file — this governs everything below, applied once per table in the package.
 1. **Be upfront about what this skill can and can't reach**: it has no live connection to the legacy system itself. Ask the user to provide the source data or schema (a CSV/JSON sample, an exported schema, or a plain description of the fields).
-2. **Propose a field mapping** — source field → target Dataverse table/column — flagging type mismatches and anything with no obvious Dataverse equivalent.
+2. **Propose a field mapping** — source field → target Dataverse table/column — flagging type mismatches, foreign keys (resolve via the crosswalk if the target table is in this package, otherwise by natural/alternate key), and anything with no obvious Dataverse equivalent.
 3. **Schema changes need their own confirmation, separate from the data load.** If the target table/columns don't exist, call `describe` to confirm, then state exactly what `create_table`/`update_table` calls you're about to make and confirm before running them. Say plainly that creating a new table is reversible (it can be deleted) but adding a column to an existing table is effectively permanent in practice.
 4. **Deduplicate the provided source data and check for existing target matches** before loading — legacy exports are often messier than a live Dataverse copy, and a second load from the same source should upsert, not blindly re-create.
 5. **Load a small sample batch first** (10–20 records), show the result, then proceed to the full batched load only after that sample looks right — this is not optional.
-6. **No-MCP fallback:** generate the schema-creation calls and the batched load script instead of running them.
+6. **No-MCP fallback:** generate the schema-creation calls and the batched load script instead of running them, in dependency order if it's a package.
 
 ## Safety rules
 
@@ -113,6 +113,7 @@ Read `references/legacy-to-dataverse.md` for the mapping and load recipe.
 - Mode 1: did the overwrite/production warning appear before the confirmation prompt?
 - Mode 2: did you clarify whether the scope was one environment or the whole tenant, recommend a test migration first, and stop at the destination-tenant approval step rather than assuming it happened? If a whole tenant, did you also cover the tenant-level artifacts with no migrate command?
 - Mode 3/4: did the preview appear before any write, and are created records' IDs tracked for rollback?
+- If more than one entity/table was in scope, did you work out the dependency order and carry one ID crosswalk across the whole package, rather than treating each entity as an isolated job with lookups copied raw?
 - Mode 4: did you say plainly that you can't reach the legacy system live, and get a separate confirmation for schema changes vs. the data load?
 - Did you distinguish, clearly, between "I ran this" and "here's what you'd run" in every case?
 

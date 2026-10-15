@@ -5,6 +5,28 @@ CRM API, a SharePoint list, an old CRM export). What it does live is the Dataver
 a mapping, create/update schema on confirmation, and load data the user provides — via the
 target environment's Dataverse MCP connection, or a generated script if that's not available.
 
+## Multi-table packages: the legacy source almost always has more than one table
+
+A legacy "customers and orders" export is two (or more) related tables, not one — follow the
+same dependency-order and ID-crosswalk approach as `record-lift-shift.md`'s "Multi-entity
+packages" section, applied to the legacy side instead of a second Dataverse environment:
+
+1. Identify every source table in scope and the foreign-key relationships between them (ask the
+   user, or infer from the provided schema/sample). Order the load so a table referenced by
+   another table's foreign key is loaded first (e.g. customers before orders).
+2. Build one ID crosswalk for the whole package: `(source table, source key, target Dataverse
+   record id)`, filled in as each table's records are created.
+3. When mapping a legacy foreign-key column (Step 2 below) whose target table is also in this
+   package, resolve it through the crosswalk once that table's records exist at the target —
+   never copy the legacy system's raw foreign-key value into a Dataverse lookup column, since it
+   means nothing there.
+4. If the legacy source also has its own many-to-many structure (a join table), handle it last,
+   once both sides it connects are loaded, the same way `record-lift-shift.md` handles N:N.
+5. Rollback for a package goes in reverse load order — delete the last-loaded table's records
+   first, using the crosswalk, before the tables they depend on.
+
+Everything below (Steps 1–4) applies per table in the package, in the order from step 1 above.
+
 ## Step 1: get the source data or schema from the user
 
 Ask for one of: a sample of the actual data (CSV/JSON, a handful of rows is enough to infer
@@ -24,9 +46,10 @@ already fits, rather than assuming a new one is needed. Flag explicitly:
 - **Fields with no obvious Dataverse equivalent** — say so rather than inventing a column to put
   them in; ask the user whether to drop the field, add a new column for it, or map it elsewhere.
 - **Lookup/relationship fields** — a foreign key in the source system doesn't resolve to a
-  meaningful Dataverse record ID; these need to be mapped by a natural/alternate key (e.g. match
-  on an external ID or name) once the related records already exist in Dataverse, not copied as
-  a raw ID from the source.
+  meaningful Dataverse record ID. If the related table is also part of this package, resolve it
+  through the ID crosswalk above once that table is loaded. If it isn't part of this package,
+  match by a natural/alternate key (e.g. an external ID or name) against records that already
+  exist in Dataverse — never copy a raw legacy foreign-key value into a lookup column.
 
 Present the full mapping table and get it confirmed before moving to schema or data.
 

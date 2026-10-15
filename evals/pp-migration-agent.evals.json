@@ -30,6 +30,12 @@
       "prompt": "Our legacy export has a single 'Customer Name' column but Dataverse needs firstname and lastname separately, and the old 'Status' field is free text ('Active'/'Inactive'/'On Hold') that needs to map to our choice column. Also we'll be running this load again next month for new customers only.",
       "expected_output": "Applies the requested field transformations (splitting Customer Name, recoding the free-text status values to specific choice options) with the exact rule stated and confirmed rather than guessed, and sets up an incremental/repeatable run using a high-water-mark column so next month's run only processes new records instead of reloading everything.",
       "files": []
+    },
+    {
+      "id": 6,
+      "prompt": "I need to move a set of accounts to our new environment, along with their contacts and their open opportunities, and keep the relationships between them intact.",
+      "expected_output": "Treats this as a multi-entity package, not three independent jobs: works out the dependency order (account before contact and opportunity, since both look up to account), builds and carries one ID crosswalk across all three entities, resolves each entity's lookups to the real target-side IDs from the crosswalk rather than copying source GUIDs, previews and confirms each entity in order, and gives one coordinated summary across the whole package including any lookups that couldn't be resolved.",
+      "files": []
     }
   ]
 }
