@@ -30,7 +30,7 @@ jobs:
         run: python scripts/check_templates.py
       - name: Build packages
         run: python scripts/build.py
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: dist
           path: dist/
