@@ -7,6 +7,8 @@
 [![Agent Skills](https://img.shields.io/badge/format-Agent%20Skills%20(SKILL.md)-6f42c1)](https://agentskills.io/specification)
 ![Status](https://img.shields.io/badge/status-preview%20v0.1.0-orange)
 
+`power-platform-alm-toolkit` generates code for later:
+
 ```text
 You:   "Before every release weekend our admins switch off ~40 flows in the Invoicing
         solution in production, then back on Monday. Build a module that does this properly."
@@ -15,6 +17,17 @@ Skill: 1. Capability mapping   → Automation & Workflow Governance, blast radiu
        2. Architecture & code  → PowerShell 7 scripts, Web API queries, snapshot of which flows were on
        3. Repo & pipelines     → file layout, GitHub Actions with test run by default + production approval
        4. Runbooks             → "Fill in these 3 boxes, tick Test run, press Run" for admins; setup for devs
+```
+
+The four live agents act right now instead — `pp-governance-agent`, for example:
+
+```text
+You:    "Audit security roles across our dev and prod environments."
+
+Agent:  1. Confirms the Dataverse MCP connection for both environments
+        2. Runs the audit live, compares role assignments between them
+        3. Reports: 2 users have System Administrator in prod but not dev (high severity)
+        4. Waits for your explicit confirmation before adding the missing role anywhere
 ```
 
 ---
