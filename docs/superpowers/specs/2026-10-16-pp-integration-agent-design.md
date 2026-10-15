@@ -58,9 +58,71 @@ skills/pp-integration-agent/
     ├── entity-mapping.md         # generic accounting-object mapping (customer, invoice, payment,
     │                                item) + transformations, reusing record-lift-shift.md's
     │                                dependency-order/crosswalk approach for related objects
+    ├── sync-infrastructure.md    # configurable Dataverse log/queue/connection-metadata tables,
+    │                                the Power Automate producer/consumer pattern for live sync
     └── sync-safety.md            # idempotency keys, sandbox-first testing, backup-before-enable,
-                                     reconciliation reporting
+                                     reconciliation reporting, and the Azure-resource upgrade path
 ```
+
+## Sync infrastructure: log, queue, and connection metadata tables (in Dataverse, configurable)
+
+Per follow-up requirement: this skill creates (on confirmation) the supporting Dataverse tables
+a sync needs, not just the mapping. Three tables, each optional and independently configurable
+(the user may want only the log, or all three):
+
+- **Sync log** — one row per sync attempt: entity, direction, source/target record reference,
+  idempotency key, status, timestamp, retry count, error message. This is the audit trail and
+  the first thing to check when a sync looks wrong.
+- **Sync queue** — one row per pending unit of work: entity, record reference, operation,
+  status (pending/processing/completed/failed), next-attempt time, retry count, idempotency key.
+  Exists so a fast Dataverse trigger can hand work off instead of doing the external call inline
+  (see the Power Automate pattern below).
+- **Connection metadata** — **never the secret itself.** A pointer/health table only: connection
+  name, a generic platform label the user chooses, which Power Platform connection or Key Vault
+  secret it refers to, status, last successful sync time. The actual OAuth token/API key lives in
+  the Power Platform connection (managed by whichever connector is in use) or Azure Key Vault —
+  never in a Dataverse column. State this as a hard safety rule, not a preference: a plaintext
+  secret in a Dataverse column is readable by anyone with table access, which is a much wider
+  blast radius than a managed connection or a vaulted secret.
+
+Schema prefix, which of the three tables to create, and retention (e.g. auto-cleanup of log rows
+past N days, which `pp-data-ops-agent`'s bulk mode can help execute later) are all asked, not
+assumed.
+
+## Recommending Power Automate for genuinely live/continuous sync
+
+This skill designs and can create the Dataverse side, but it does not run a continuous sync
+itself (see Non-goals). When the user wants near-real-time sync rather than a one-time or
+scheduled batch load, recommend the standard decoupled pattern rather than one flow doing
+everything inline:
+
+1. A **trigger flow** (Dataverse "row added/modified" trigger) that only writes a row to the
+   sync queue table — fast, so it never times out waiting on an external API.
+2. A **processing flow** (queue-triggered or scheduled) that reads pending queue rows in
+   batches, calls the connector/custom-connector action, writes the result to the sync log,
+   updates the queue row's status, and retries failed rows with backoff up to a configured limit.
+
+State this as the recommended architecture, generated as flow definitions for the user to
+import and review — not run from this chat session.
+
+## When to suggest Azure resources instead of (or alongside) the Dataverse+Power Automate approach
+
+Only as an upgrade path, not a default — the Dataverse-table-plus-Power-Automate design above is
+right for most low/medium-volume syncs. Suggest Azure resources when the user describes a volume,
+durability, or ordering need the Dataverse queue table and Power Automate's native retry won't
+comfortably handle:
+
+- **Azure Key Vault** — if the custom-connector pattern needs its own managed secret rather than
+  relying on a Power Platform connection's built-in credential storage.
+- **Azure Service Bus** (queue or topic) — in place of the Dataverse queue table, when volume,
+  strict ordering, or dead-lettering semantics matter more than a Dataverse table can offer.
+- **Azure Functions** — for retry/backoff or transformation logic more complex than Power
+  Automate's expression language handles comfortably, called from a flow via an HTTP action.
+- **Application Insights** — for centralized monitoring/alerting across many sync runs, beyond
+  what querying the Dataverse sync log table gives you.
+
+Present these as a named option with a one-line reason each, not an assumed requirement — most
+users asking for "sync my data with my accounting platform" want the simpler path.
 
 ## The shape (one coherent flow, not separate "modes")
 
