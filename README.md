@@ -299,6 +299,7 @@ Invoke-Pester ./tests -Output Detailed
 
 ## Roadmap
 
+- [ ] **`pp-governance-agent` skill** (in design — see [spec](docs/superpowers/specs/2026-10-15-pp-governance-agent-design.md) and [plan](docs/superpowers/plans/2026-10-15-pp-governance-agent.md)): a second skill, triggered by your AI tool, that runs live checks through the Microsoft Dataverse MCP server you already have connected — security role drift between environments, broken/stale connection references, and flows that fail to turn on after a solution import — and proposes fixes that only run on your confirmation. Positioned as a lightweight, zero-setup alternative to the piece of the retired Power Platform CoE Starter Kit that's gone: it finds problems *and* fixes them, not just a dashboard.
 - [ ] Evaluation runs across the prompts in `evals/` with published results
 - [ ] Ready-made reference modules (data dictionary, flow on/off, role sync) in a companion `pp-ops-toolkit` repo
 - [ ] Azure DevOps pipeline variants
