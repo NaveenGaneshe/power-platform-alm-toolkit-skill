@@ -63,9 +63,9 @@ This repo fixes that two ways: `power-platform-alm-toolkit` gives the AI one con
 | For | Benefit |
 |---|---|
 | **Developers** | Complete, copy-pasteable files instead of fragments. Environment-agnostic code: the same commit deploys to dev, test and prod. CI/CD that unpacks, versions, checks, packs and deploys out of the box. |
-| **Citizen developers & admins** | Every operation gets a simple GitHub form (text boxes, toggles, dropdowns) and a jargon-free runbook. Test runs are on by default, so nothing changes until you say so. |
-| **Platform / CoE leads** | One consistent pattern across every module: least-privilege identities, production approval gates, before-change snapshots and an undo path. These are easy to review and audit. |
-| **Everyone** | Works in the AI tool your team already uses. One skill folder, many tools. |
+| **Citizen developers & admins** | Every generated operation gets a simple GitHub form (text boxes, toggles, dropdowns) and a jargon-free runbook, test-run on by default. For one-off questions and quick fixes, `pp-data-ops-agent` skips the form entirely — just ask and get a live answer or a confirm-before-write change. |
+| **Platform / CoE leads** | One consistent safety pattern across every module and every live operation: least-privilege identities, production approval gates (generated code) or explicit per-action confirmation (live agent), before-change snapshots, and an undo path. Easy to review and audit either way. |
+| **Everyone** | Works in the AI tool your team already uses. Two skill folders, every tool. |
 
 ---
 
