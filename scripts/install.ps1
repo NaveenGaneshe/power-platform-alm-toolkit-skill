@@ -87,7 +87,7 @@ if ($skillsRoot) {
 }
 elseif ($Uninstall) {
     # Uninstall without a source checkout: fall back to the names known at release time.
-    $skillNames = @('power-platform-alm-toolkit', 'pp-data-ops-agent')
+    $skillNames = @('power-platform-alm-toolkit', 'pp-data-ops-agent', 'pp-governance-agent')
 }
 
 try {

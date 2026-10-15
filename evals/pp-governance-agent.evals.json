@@ -1,0 +1,23 @@
+{
+  "skill_name": "pp-governance-agent",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Can you check if anyone has different security roles in our prod environment compared to dev? I have MCP connections set up as dataverse-dev and dataverse-prod.",
+      "expected_output": "Runs mode 1 (role drift) by calling read_query against both named MCP connections, reports a user/role/present-in/missing-in/severity table, flags any admin-type role present only in prod as high severity, and does not attempt any write without a separate confirmation step.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "We just imported the Invoicing solution into UAT and three flows won't turn on. What's wrong?",
+      "expected_output": "Runs mode 2 first (connection reference health) then mode 3 (post-import flow health), cross-references broken connection references as the likely root cause for the flows that won't turn on, reports a flow/state/root-cause/proposed-fix table, and does not turn any flow on without explicit confirmation and without first resolving its connection reference.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "Give me a full health check on our contoso-test environment, like what the old CoE Starter Kit used to do but actually able to fix things.",
+      "expected_output": "Confirms the dataverse MCP connection for contoso-test exists (or asks the user to add it if not), runs all three modes against it, reports each as its own table (reporting 'no issues found' for any mode with nothing wrong, not silence), and offers to apply specific confirmed fixes rather than applying everything at once.",
+      "files": []
+    }
+  ]
+}

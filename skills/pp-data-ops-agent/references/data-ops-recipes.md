@@ -54,6 +54,37 @@ IDs returned by the preview query:
   the opposite direction — mention this as the undo path in the final summary. A delete is not
   reversible; this is exactly why deletes require their own separate confirmation per `SKILL.md`.
 
+## No-MCP fallback
+
+When no Dataverse MCP tools are available, hand over the equivalent artifact instead of running
+anything. Don't invent new syntax for this — reuse the same query, translated to a form the user
+can run without MCP:
+
+**Mode 1 (query):** give the `SELECT` as-is, plus one way to run it: the Dataverse TDS/SQL
+endpoint (SQL Server Management Studio, or Power Apps' "Analyze in Power BI"), or the equivalent
+FetchXML via `pac env fetch --environment <url> --xml "<fetch>...</fetch>"` if they'd rather use
+the Power Platform CLI they may already have.
+
+**Mode 2 (bulk operation):** give the preview `SELECT` first, then the per-record Web API calls
+that would apply the change — entity set names here are pluralized, unlike the singular table
+names Dataverse SQL uses (`accounts`, not `account`):
+
+```
+# Preview first — run this, confirm the row count and sample look right, then proceed.
+PATCH <org-url>/api/data/v9.2/incidents(<incidentid>)
+Content-Type: application/json
+If-Match: *
+
+{ "statecode": 1, "statuscode": 2 }
+```
+
+For a delete: `DELETE <org-url>/api/data/v9.2/<entityset>(<id>)` — call out in the handed-over
+script, in its own comment, that this step is irreversible and should be run record-by-record or
+in small batches, not as a blind loop over every ID from the preview.
+
+Both calls need `Authorization: Bearer <token>`, `OData-MaxVersion: 4.0`, `OData-Version: 4.0` —
+mention this once rather than repeating it in every generated snippet.
+
 ## Report format
 
 Preview (before any write):
