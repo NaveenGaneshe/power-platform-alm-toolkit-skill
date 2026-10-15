@@ -1,0 +1,23 @@
+{
+  "skill_name": "power-platform-alm-toolkit",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Our BA team keeps asking devs for a data dictionary. Can you build a toolkit module that generates one for all custom tables in a given solution (table, column, data type, required level, description, and choice values) and outputs Markdown + CSV? The BAs should be able to run it themselves from GitHub without touching code. Our environments are contoso-dev, contoso-test and contoso-prod on crm4.dynamics.com.",
+      "expected_output": "Four-part blueprint classified as Data & Schema Management; read-only script using EntityDefinitions/solutioncomponents with paging; repo placement; workflow_dispatch runbook plus validation pipeline; plain-language operator runbook with an inputs table.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "before every release weekend our admins manually switch off about 40 power automate flows in the 'Invoicing' solution in prod, then switch them all back on monday. half the time someone forgets one. build me a module for the toolkit that does this properly",
+      "expected_output": "Four-part blueprint classified as Automation & Workflow Governance; script that lists cloud flows (category 5) in the solution via solutioncomponents, snapshots their current state, turns off/on via statecode/statuscode with per-flow error reporting; restore-from-snapshot so only previously-on flows are re-enabled; production approval gate; dry-run default; plain runbook.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "Just the pipeline please. We have one solution, HRCore. I need GitHub Actions to export it from dev into git, then promote to UAT and prod. The SharePoint site URL environment variable is different in each environment, and there's a SharePoint connection reference. Prod must need a manager's approval.",
+      "expected_output": "Scaled response focused on Part 3 (pipeline) with correct powerplatform-actions inputs, Both unpack, managed pack, versioning, deployment settings with per-environment injection for the env var and connection reference, uat and production GitHub environments with required reviewers; other parts brief or offered.",
+      "files": []
+    }
+  ]
+}

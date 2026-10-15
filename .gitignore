@@ -1,0 +1,19 @@
+# Build output
+dist/
+out/
+*.zip
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Local test artifacts
+testResults.xml
+coverage.xml

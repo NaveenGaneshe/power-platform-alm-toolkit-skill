@@ -1,0 +1,22 @@
+name: Feature or pattern request
+description: Suggest a new operation, pattern, tool integration or improvement
+labels: [enhancement]
+body:
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category
+      options: [Data & Schema Management, Access & Profile Administration, Automation & Workflow Governance, Environment Operations, AI tool support, Other]
+    validations:
+      required: true
+  - type: textarea
+    id: need
+    attributes:
+      label: What do you want to be able to do?
+      placeholder: "As a Power Platform admin I want to ... so that ..."
+    validations:
+      required: true
+  - type: textarea
+    id: refs
+    attributes:
+      label: Relevant docs or examples

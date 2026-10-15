@@ -1,0 +1,102 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  skill:
+    name: Validate skill and build packages
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install PyYAML
+        run: pip install pyyaml
+      - name: Validate against the Agent Skills spec
+        run: python scripts/validate.py
+      - name: Check YAML/JSON examples inside the skill
+        run: python scripts/check_templates.py
+      - name: Build packages
+        run: python scripts/build.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+          retention-days: 14
+
+  powershell:
+    name: PowerShell tests (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Pester and PSScriptAnalyzer
+        shell: pwsh
+        run: |
+          Set-PSRepository PSGallery -InstallationPolicy Trusted
+          Install-Module Pester -MinimumVersion 5.5.0 -Scope CurrentUser -Force -SkipPublisherCheck
+          Install-Module PSScriptAnalyzer -Scope CurrentUser -Force
+      - name: Static analysis
+        shell: pwsh
+        run: |
+          $issues = Invoke-ScriptAnalyzer -Path . -Recurse -Settings ./PSScriptAnalyzerSettings.psd1
+          $issues | Format-Table RuleName, Severity, ScriptName, Line, Message -AutoSize -Wrap
+          if ($issues | Where-Object Severity -eq 'Error') { throw 'PSScriptAnalyzer reported errors.' }
+      - name: Unit tests
+        shell: pwsh
+        run: |
+          $cfg = New-PesterConfiguration
+          $cfg.Run.Path = './tests'
+          $cfg.Run.Exit = $true
+          $cfg.Output.Verbosity = 'Detailed'
+          Invoke-Pester -Configuration $cfg
+
+  installers:
+    name: Installer smoke test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - name: install.sh (user + project scope)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          set -euo pipefail
+          export HOME="$(mktemp -d)"
+          ./scripts/install.sh --tool all
+          test -f "$HOME/.claude/skills/power-platform-alm-toolkit/SKILL.md"
+          test -f "$HOME/.agents/skills/power-platform-alm-toolkit/SKILL.md"
+          cd "$(mktemp -d)"
+          "$GITHUB_WORKSPACE/scripts/install.sh" --tool copilot,cursor,gemini --scope project
+          test -f .github/skills/power-platform-alm-toolkit/SKILL.md
+          test -f .cursor/skills/power-platform-alm-toolkit/SKILL.md
+          test -f .gemini/skills/power-platform-alm-toolkit/SKILL.md
+          "$GITHUB_WORKSPACE/scripts/install.sh" --uninstall --tool all
+          test ! -e "$HOME/.claude/skills/power-platform-alm-toolkit"
+      - name: install.ps1
+        shell: pwsh
+        run: |
+          $env:USERPROFILE = Join-Path ([IO.Path]::GetTempPath()) ([guid]::NewGuid())
+          New-Item -ItemType Directory -Path $env:USERPROFILE | Out-Null
+          ./scripts/install.ps1 -Tool claude,codex
+          if (-not (Test-Path (Join-Path $env:USERPROFILE '.claude/skills/power-platform-alm-toolkit/SKILL.md'))) { throw 'claude install missing' }
+          if (-not (Test-Path (Join-Path $env:USERPROFILE '.agents/skills/power-platform-alm-toolkit/SKILL.md'))) { throw 'codex install missing' }
+          ./scripts/install.ps1 -Tool all -Uninstall
