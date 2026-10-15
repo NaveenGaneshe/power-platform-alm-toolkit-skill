@@ -70,6 +70,8 @@ This repo fixes that two ways: `power-platform-alm-toolkit` gives the AI one con
 
 ## Features
 
+This section is specific to `power-platform-alm-toolkit`'s code generation. For what the four live agents do, see "Skills in this repo" above and "Using the live agents" below.
+
 ### The four-part operational blueprint
 
 Every module request is answered in the same structure:
@@ -202,7 +204,7 @@ You should get the four section names back — this confirms `power-platform-alm
 
 ## Usage
 
-Just describe the operation. The skill triggers automatically on Power Platform, Dataverse, Power Automate, PAC CLI, solution ALM and related requests. You don't need to mention the skill or the blueprint.
+Just describe what you need — each skill triggers automatically based on the request, so you don't need to name it. This section covers `power-platform-alm-toolkit` (the code-generation skill); see "Using the live agents" below for the other four.
 
 ### Example prompts
 
@@ -225,11 +227,24 @@ More in [`examples/prompts.md`](examples/prompts.md).
 - **Ask for just one part** ("only the runbook", "only the pipeline") when that's all you need. The skill scales its answer.
 - **Let it write files.** In agentic tools (Claude Code, Codex, Copilot agent mode, Cursor), ask it to create the files in your toolkit repo directly.
 
+### Using the live agents
+
+Same idea — describe what you need, no need to name the skill — but these four act live (or generate a ready-to-run equivalent) instead of producing files for you to commit:
+
+| Agent | Try asking |
+|---|---|
+| `pp-data-ops-agent` | "How many contacts have no email address?" / "Deactivate every case open over 90 days, with a preview first." |
+| `pp-governance-agent` | "Audit security role drift between our dev and prod environments." / "Why won't my flows turn back on after the import?" |
+| `pp-migration-agent` | "Copy our dev environment into a new UAT sandbox." / "Move these accounts, their contacts, and their open opportunities to the new environment, keeping the relationships intact." |
+| `pp-integration-agent` | "Connect Dataverse to our CRM so contacts stay in sync." / "We need this to sync continuously with no duplicates even on retry." |
+
+Each one tells you plainly what it needs (a Dataverse MCP connection, `pac`/PowerShell, or neither) and what it can't do live before it does anything — see each skill's own `SKILL.md` for the full picture, or the "Skills in this repo" table above for a one-line summary of each.
+
 ---
 
 ## What you get
 
-Generated modules follow one repository convention, so a toolkit built over months still feels like one product:
+This section describes `power-platform-alm-toolkit`'s generated output specifically — the four live agents act directly rather than generating a repo structure like this one. Generated modules follow one repository convention, so a toolkit built over months still feels like one product:
 
 ```text
 pp-ops-toolkit/
