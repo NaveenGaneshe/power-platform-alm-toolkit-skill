@@ -86,29 +86,35 @@ jobs:
           test -f "$HOME/.claude/skills/pp-data-ops-agent/SKILL.md"
           test -f "$HOME/.claude/skills/pp-governance-agent/SKILL.md"
           test -f "$HOME/.claude/skills/pp-migration-agent/SKILL.md"
+          test -f "$HOME/.claude/skills/pp-integration-agent/SKILL.md"
           test -f "$HOME/.agents/skills/power-platform-alm-toolkit/SKILL.md"
           test -f "$HOME/.agents/skills/pp-data-ops-agent/SKILL.md"
           test -f "$HOME/.agents/skills/pp-governance-agent/SKILL.md"
           test -f "$HOME/.agents/skills/pp-migration-agent/SKILL.md"
+          test -f "$HOME/.agents/skills/pp-integration-agent/SKILL.md"
           cd "$(mktemp -d)"
           "$GITHUB_WORKSPACE/scripts/install.sh" --tool copilot,cursor,gemini --scope project
           test -f .github/skills/power-platform-alm-toolkit/SKILL.md
           test -f .github/skills/pp-data-ops-agent/SKILL.md
           test -f .github/skills/pp-governance-agent/SKILL.md
           test -f .github/skills/pp-migration-agent/SKILL.md
+          test -f .github/skills/pp-integration-agent/SKILL.md
           test -f .cursor/skills/power-platform-alm-toolkit/SKILL.md
           test -f .cursor/skills/pp-data-ops-agent/SKILL.md
           test -f .cursor/skills/pp-governance-agent/SKILL.md
           test -f .cursor/skills/pp-migration-agent/SKILL.md
+          test -f .cursor/skills/pp-integration-agent/SKILL.md
           test -f .gemini/skills/power-platform-alm-toolkit/SKILL.md
           test -f .gemini/skills/pp-data-ops-agent/SKILL.md
           test -f .gemini/skills/pp-governance-agent/SKILL.md
           test -f .gemini/skills/pp-migration-agent/SKILL.md
+          test -f .gemini/skills/pp-integration-agent/SKILL.md
           "$GITHUB_WORKSPACE/scripts/install.sh" --uninstall --tool all
           test ! -e "$HOME/.claude/skills/power-platform-alm-toolkit"
           test ! -e "$HOME/.claude/skills/pp-data-ops-agent"
           test ! -e "$HOME/.claude/skills/pp-governance-agent"
           test ! -e "$HOME/.claude/skills/pp-migration-agent"
+          test ! -e "$HOME/.claude/skills/pp-integration-agent"
       - name: install.ps1
         shell: pwsh
         run: |
@@ -119,8 +125,10 @@ jobs:
           if (-not (Test-Path (Join-Path $env:USERPROFILE '.claude/skills/pp-data-ops-agent/SKILL.md'))) { throw 'claude install missing (pp-data-ops-agent)' }
           if (-not (Test-Path (Join-Path $env:USERPROFILE '.claude/skills/pp-governance-agent/SKILL.md'))) { throw 'claude install missing (pp-governance-agent)' }
           if (-not (Test-Path (Join-Path $env:USERPROFILE '.claude/skills/pp-migration-agent/SKILL.md'))) { throw 'claude install missing (pp-migration-agent)' }
+          if (-not (Test-Path (Join-Path $env:USERPROFILE '.claude/skills/pp-integration-agent/SKILL.md'))) { throw 'claude install missing (pp-integration-agent)' }
           if (-not (Test-Path (Join-Path $env:USERPROFILE '.agents/skills/power-platform-alm-toolkit/SKILL.md'))) { throw 'codex install missing' }
           if (-not (Test-Path (Join-Path $env:USERPROFILE '.agents/skills/pp-data-ops-agent/SKILL.md'))) { throw 'codex install missing (pp-data-ops-agent)' }
           if (-not (Test-Path (Join-Path $env:USERPROFILE '.agents/skills/pp-governance-agent/SKILL.md'))) { throw 'codex install missing (pp-governance-agent)' }
           if (-not (Test-Path (Join-Path $env:USERPROFILE '.agents/skills/pp-migration-agent/SKILL.md'))) { throw 'codex install missing (pp-migration-agent)' }
+          if (-not (Test-Path (Join-Path $env:USERPROFILE '.agents/skills/pp-integration-agent/SKILL.md'))) { throw 'codex install missing (pp-integration-agent)' }
           ./scripts/install.ps1 -Tool all -Uninstall

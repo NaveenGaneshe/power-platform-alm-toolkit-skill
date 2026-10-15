@@ -1,6 +1,6 @@
 # Power Platform ALM Toolkit Skill
 
-**Turn any AI assistant into an enterprise Power Platform architect — and a live Dataverse operator.** This repo ships four Agent Skills: one teaches Claude, Codex, GitHub Copilot, Cursor, Gemini and other AI tools to generate production-ready ALM automation (source-controlled scripts, GitHub Actions pipelines, plain-language runbooks); the other three run live Dataverse queries, bulk data operations, governance checks, and environment/tenant/data migrations right now — through the Dataverse MCP server and `pac`/PowerShell when connected and authenticated, or by generating the equivalent query/script/runbook when they aren't, so none of them require that setup first.
+**Turn any AI assistant into an enterprise Power Platform architect — and a live Dataverse operator.** This repo ships five Agent Skills: one teaches Claude, Codex, GitHub Copilot, Cursor, Gemini and other AI tools to generate production-ready ALM automation (source-controlled scripts, GitHub Actions pipelines, plain-language runbooks); the other four run live Dataverse queries, bulk data operations, governance checks, environment/tenant/data migrations, and external-platform integrations right now — through the Dataverse MCP server and `pac`/PowerShell when connected and authenticated, or by generating the equivalent query/script/runbook when they aren't, so none of them require that setup first.
 
 [![CI](https://github.com/NaveenGaneshe/power-platform-alm-toolkit-skill/actions/workflows/ci.yml/badge.svg)](https://github.com/NaveenGaneshe/power-platform-alm-toolkit-skill/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
@@ -44,6 +44,7 @@ Skill: 1. Capability mapping   → Automation & Workflow Governance, blast radiu
 | [`pp-data-ops-agent`](skills/pp-data-ops-agent) | ✅ Shipped | Ask-and-answer queries and bulk record updates/deactivations/deletes, with a preview and an explicit confirmation gate before anything writes. **Runs live** through the Dataverse MCP server if you have it connected — if you don't, it generates the equivalent query or script for you to run yourself instead of refusing. | "How many contacts have no email?", "deactivate cases open over 90 days," "show me accounts created last month." |
 | [`pp-governance-agent`](skills/pp-governance-agent) | ✅ Shipped | Security-role drift between environments, connection-reference health, and post-import flow health, with fixes proposed and applied only on confirmation — a lightweight alternative to the piece of the retired Power Platform CoE Starter Kit that gave visibility but couldn't fix anything itself. **Runs live** through the Dataverse MCP server if connected; otherwise generates the same checks as a runbook you run yourself. | "Audit my security roles," "why won't my flows turn on," "health check my environment." |
 | [`pp-migration-agent`](skills/pp-migration-agent) | ✅ Shipped | "Lift and shift" migration across four modes: same-tenant environment copy (`pac admin copy`); tenant-to-tenant migration of one environment or a whole tenant (the real `TenantToTenant-*` PowerShell process, walked step by step, including the tenant-level settings that don't travel with any one environment); and copying records or legacy data into Dataverse — not just single tables, but full **multi-entity/multi-table packages**, with dependency-ordered loading, a shared ID crosswalk so relationships between entities resolve correctly, N:N associations, deduplication, upsert matching, field transformations and incremental/repeatable runs, covering the kind of migration/integration work usually done with a dedicated paid ETL tool. Every destructive or data-moving step states a concrete backup/rollback path (`pac admin backup`/`restore`, or tracked record IDs, in reverse dependency order for a package) before it runs — not after something goes wrong. Solution promotion is redirected to `power-platform-alm-toolkit`. | "Copy our dev environment into UAT," "move our whole tenant to the new one after the acquisition," "move these accounts, their contacts, and their open opportunities together with the relationships intact," "load this CSV export from our old CRM into Dataverse." |
+| [`pp-integration-agent`](skills/pp-integration-agent) | ✅ Shipped | Connects Dataverse to an external platform (CRM, accounting, e-commerce, marketing, support, or other SaaS) — never naming a specific product anywhere in its own files, even if you name one. Maps related objects via dependency order and an ID crosswalk, checks for or builds a connector, and creates configurable Dataverse log/queue/connection-metadata tables (the connection table stores a pointer, never a real secret). Recommends a Power Automate trigger/queue/processing pattern for live sync — this skill never runs an ongoing sync itself — and suggests Azure resources (Key Vault, Service Bus, Functions, App Insights) only past that default's limits. Every write is idempotent; sample-tested and live are always separate confirmations. | "Sync our contacts and accounts with our CRM," "connect Dataverse to our accounting system so invoices sync automatically," "we need this to sync continuously with no duplicates even on retry." |
 
 ## Why this exists
 
@@ -177,17 +178,17 @@ Update by running the installer again. Uninstall with `--uninstall` (Bash) or `-
 
 ### Option 3: Manual copy
 
-Copy any of [`skills/power-platform-alm-toolkit`](skills/power-platform-alm-toolkit), [`skills/pp-data-ops-agent`](skills/pp-data-ops-agent), [`skills/pp-governance-agent`](skills/pp-governance-agent), or [`skills/pp-migration-agent`](skills/pp-migration-agent) into any directory from the table above. Each folder name must stay exactly as it is in this repo.
+Copy any of [`skills/power-platform-alm-toolkit`](skills/power-platform-alm-toolkit), [`skills/pp-data-ops-agent`](skills/pp-data-ops-agent), [`skills/pp-governance-agent`](skills/pp-governance-agent), [`skills/pp-migration-agent`](skills/pp-migration-agent), or [`skills/pp-integration-agent`](skills/pp-integration-agent) into any directory from the table above. Each folder name must stay exactly as it is in this repo.
 
 ### Option 4: Claude apps (claude.ai, desktop, mobile)
 
-1. Download the zip for whichever skill(s) you want — `power-platform-alm-toolkit.zip`, `pp-data-ops-agent.zip`, `pp-governance-agent.zip`, `pp-migration-agent.zip` — from the [latest release](https://github.com/NaveenGaneshe/power-platform-alm-toolkit-skill/releases/latest). Each skill is its own zip.
+1. Download the zip for whichever skill(s) you want — `power-platform-alm-toolkit.zip`, `pp-data-ops-agent.zip`, `pp-governance-agent.zip`, `pp-migration-agent.zip`, `pp-integration-agent.zip` — from the [latest release](https://github.com/NaveenGaneshe/power-platform-alm-toolkit-skill/releases/latest). Each skill is its own zip.
 2. In Claude, open **Settings → Capabilities**, make sure **Code execution and file creation** is on, then under **Skills** choose **Upload skill** and select each zip.
 3. Toggle the skill(s) on. On Team and Enterprise plans, owners can provision them for the whole organization.
 
 ### Option 5: ChatGPT, Gemini, Copilot Studio and other chat assistants
 
-For each skill you want, download its `<skill-name>.md` (the whole skill in one file) and `<skill-name>.instructions.md` from the [latest release](https://github.com/NaveenGaneshe/power-platform-alm-toolkit-skill/releases/latest), then follow the [chat assistants guide](docs/chat-assistants.md). `pp-data-ops-agent`, `pp-governance-agent`, and `pp-migration-agent` all work without any MCP connection (they'll generate a query/script/runbook instead of running live), but get the most value where the tool also supports connecting the Dataverse MCP server — most portable chat assistants don't, so Claude Code, Claude Desktop, or GitHub Copilot get the live experience. `pp-migration-agent`'s environment/tenant-copy modes additionally need the `pac` CLI or PowerShell available to run live at all, in any tool.
+For each skill you want, download its `<skill-name>.md` (the whole skill in one file) and `<skill-name>.instructions.md` from the [latest release](https://github.com/NaveenGaneshe/power-platform-alm-toolkit-skill/releases/latest), then follow the [chat assistants guide](docs/chat-assistants.md). `pp-data-ops-agent`, `pp-governance-agent`, `pp-migration-agent`, and `pp-integration-agent` all work without any MCP connection (they'll generate a query/script/runbook instead of running live), but get the most value where the tool also supports connecting the Dataverse MCP server — most portable chat assistants don't, so Claude Code, Claude Desktop, or GitHub Copilot get the live experience. `pp-migration-agent`'s environment/tenant-copy modes additionally need the `pac` CLI or PowerShell available to run live at all, in any tool; `pp-integration-agent`'s connector and flow design is always generated output in every tool, since it never runs an ongoing sync itself.
 
 ### Check it's working
 
@@ -195,7 +196,7 @@ Start a new session and ask:
 
 > *What's the four-part blueprint you use for Power Platform toolkit modules?*
 
-You should get the four section names back — this confirms `power-platform-alm-toolkit`. For `pp-data-ops-agent`, ask something like *"how many contacts have no email address?"* — without the Dataverse MCP server connected, it should hand you a ready-to-run query rather than refuse; with it connected (see its [compatibility note](skills/pp-data-ops-agent/SKILL.md)), it runs that query live and answers directly. `pp-governance-agent` works the same way for something like *"audit my security roles."* For `pp-migration-agent`, try *"copy our dev environment into a new sandbox"* — it should state the overwrite warning and ask about a backup before proposing the `pac admin copy` command. In Codex you can also type `$power-platform-alm-toolkit`, and in Claude Code `/power-platform-alm-toolkit`, to call any of the four skills explicitly by name.
+You should get the four section names back — this confirms `power-platform-alm-toolkit`. For `pp-data-ops-agent`, ask something like *"how many contacts have no email address?"* — without the Dataverse MCP server connected, it should hand you a ready-to-run query rather than refuse; with it connected (see its [compatibility note](skills/pp-data-ops-agent/SKILL.md)), it runs that query live and answers directly. `pp-governance-agent` works the same way for something like *"audit my security roles."* For `pp-migration-agent`, try *"copy our dev environment into a new sandbox"* — it should state the overwrite warning and ask about a backup before proposing the `pac admin copy` command. For `pp-integration-agent`, try *"connect Dataverse to our CRM so contacts stay in sync"* — it should scope the objects and ask you to check the connector gallery yourself, without ever naming a specific product. In Codex you can also type `$power-platform-alm-toolkit`, and in Claude Code `/power-platform-alm-toolkit`, to call any of the five skills explicitly by name.
 
 ---
 
@@ -282,10 +283,14 @@ The skill itself needs nothing beyond a supported AI tool. The automation it gen
 │   │   ├── SKILL.md
 │   │   ├── references/                   #     mcp-tool-reference, check-recipes, admin-api-patterns
 │   │   └── LICENSE.txt
-│   └── pp-migration-agent/               #   environment copy, tenant migration, record & legacy data lift-and-shift
+│   ├── pp-migration-agent/                #   environment copy, tenant migration, record & legacy data lift-and-shift
+│   │   ├── SKILL.md
+│   │   ├── references/                    #     same-tenant-copy, cross-tenant-migration, record-lift-shift,
+│   │   │                                  #     legacy-to-dataverse
+│   │   └── LICENSE.txt
+│   └── pp-integration-agent/              #   external platform connectors, mapping, sync infra — no product names
 │       ├── SKILL.md
-│       ├── references/                   #     same-tenant-copy, cross-tenant-migration, record-lift-shift,
-│       │                                 #     legacy-to-dataverse
+│       ├── references/                    #     connector-options, entity-mapping, sync-infrastructure, sync-safety
 │       └── LICENSE.txt
 ├── scripts/
 │   ├── install.sh / install.ps1         # installers for every supported tool — install every skill above

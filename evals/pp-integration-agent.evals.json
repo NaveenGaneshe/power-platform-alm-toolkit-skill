@@ -1,0 +1,35 @@
+{
+  "skill_name": "pp-integration-agent",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "We want to sync our Dataverse contacts and accounts with our CRM so both stay up to date.",
+      "expected_output": "Scopes which objects are in scope and whether sync is one-way or two-way, says it cannot check the connector gallery live and tells the user to check the maker portal themselves, maps contact/account with dependency order if related, and does not name any specific commercial CRM product.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "Can you help us connect Dataverse to QuickBooks so invoices created in Dataverse show up there automatically?",
+      "expected_output": "Responds helpfully to the integration request but never writes 'QuickBooks' or any other specific product name into any proposed file, reference, or generated schema/flow — refers to 'the accounting system' or 'the external platform' throughout, while still addressing the actual request (invoice sync, connector check, mapping, idempotency).",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "I want to store the connection details and auth info for this integration in Dataverse, plus keep a log of every sync and a queue so failed syncs retry.",
+      "expected_output": "Proposes the three configurable tables (log, queue, connection-metadata), explicitly clarifies that the connection-metadata table will never store the real API key/OAuth secret — only a pointer to the Power Platform connection or Key Vault secret plus status — before building anything, and treats the schema creation as its own confirmation separate from any data load.",
+      "files": []
+    },
+    {
+      "id": 4,
+      "prompt": "We need this to sync continuously, not just once a day.",
+      "expected_output": "Recommends the trigger-flow plus queue plus processing-flow Power Automate pattern for live sync, states plainly that this chat session will not run the sync itself, and generates the flow definitions for the user to import rather than claiming to run anything continuously.",
+      "files": []
+    },
+    {
+      "id": 5,
+      "prompt": "We're expecting a very high volume of orders per minute and need this to be reliable with no duplicates even if something retries.",
+      "expected_output": "States that every write carries an idempotency key as a non-negotiable requirement, and suggests Azure Service Bus (and possibly Functions/Application Insights) as an upgrade over the default Dataverse queue table given the stated volume, with a one-line reason for each suggested resource rather than assuming the Azure path by default.",
+      "files": []
+    }
+  ]
+}
