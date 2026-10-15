@@ -21,7 +21,7 @@ Skill: 1. Capability mapping   → Automation & Workflow Governance, blast radiu
 
 ## Contents
 
-- [Two skills, one toolkit](#two-skills-one-toolkit)
+- [Skills in this repo](#skills-in-this-repo)
 - [Why this exists](#why-this-exists)
 - [Features](#features)
 - [Supported AI tools](#supported-ai-tools)
@@ -36,16 +36,23 @@ Skill: 1. Capability mapping   → Automation & Workflow Governance, blast radiu
 
 ---
 
-## Two skills, one toolkit
+## Skills in this repo
 
-| Skill | What it does | Trigger |
-|---|---|---|
-| [`power-platform-alm-toolkit`](skills/power-platform-alm-toolkit) | **Generates** ALM code for you: scripts, pipelines, and runbooks, ready to commit and run later. | Any Power Platform ALM request — pipelines, bulk-update scripts, role sync, flow governance. |
-| [`pp-data-ops-agent`](skills/pp-data-ops-agent) | **Runs** live Dataverse data operations for you, right now, through the Dataverse MCP server you already have connected — ask-and-answer queries and bulk record updates/deactivations/deletes, with a preview and an explicit confirmation gate before anything writes. | "How many contacts have no email?", "deactivate cases open over 90 days," "show me accounts created last month." |
+| Skill | Status | What it does | Trigger |
+|---|---|---|---|
+| [`power-platform-alm-toolkit`](skills/power-platform-alm-toolkit) | ✅ Shipped | **Generates** ALM code for you: scripts, pipelines, and runbooks, ready to commit and run later. | Any Power Platform ALM request — pipelines, bulk-update scripts, role sync, flow governance. |
+| [`pp-data-ops-agent`](skills/pp-data-ops-agent) | ✅ Shipped | **Runs** live Dataverse data operations for you, right now, through the Dataverse MCP server — ask-and-answer queries and bulk record updates/deactivations/deletes, with a preview and an explicit confirmation gate before anything writes. | "How many contacts have no email?", "deactivate cases open over 90 days," "show me accounts created last month." |
+| `pp-governance-agent` | 🚧 In design — [spec](docs/superpowers/specs/2026-10-15-pp-governance-agent-design.md) · [plan](docs/superpowers/plans/2026-10-15-pp-governance-agent.md) | Will run live security-role drift, connection-reference health, and post-import flow-health checks, proposing fixes that only run on your confirmation — a lightweight, zero-setup alternative to the piece of the retired Power Platform CoE Starter Kit that gave visibility but couldn't fix anything itself. | "Audit my security roles," "why won't my flows turn on," "health check my environment." Not installable yet — no `skills/pp-governance-agent/` folder exists until the plan above is implemented. |
 
-A third skill, `pp-governance-agent` (live security-role drift, connection-reference health, and
-post-import flow-health checks), is in design — see its [spec](docs/superpowers/specs/2026-10-15-pp-governance-agent-design.md)
-and [plan](docs/superpowers/plans/2026-10-15-pp-governance-agent.md).
+### About the Dataverse MCP server (`pp-data-ops-agent`, and `pp-governance-agent` once built)
+
+These agent skills act live on a real Dataverse environment through the **Microsoft Dataverse MCP server** — they don't ship their own connection or auth layer. If you haven't connected it yet, the skill itself will tell you so, rather than failing silently or guessing at an environment: it checks whether any Dataverse MCP tools are available, and if not, gives you the exact setup command and tells you where to find your environment URL. To set it up ahead of time in Claude Code:
+
+```bash
+claude mcp add dataverse-dev -t stdio -- npx -y @microsoft/dataverse mcp https://yourorg-dev.crm.dynamics.com
+```
+
+Repeat with a different name per environment (`dataverse-test`, `dataverse-prod`, ...). See [Microsoft's connection guide](https://learn.microsoft.com/power-apps/maker/data-platform/data-platform-mcp) for GitHub Copilot, Copilot Studio, and other clients. Note: Dataverse MCP tool calls from non-Copilot-Studio clients (including Claude Code) are billed per Microsoft's published rates unless you have a qualifying Dynamics 365 Premium or Microsoft 365 Copilot license.
 
 ## Why this exists
 
@@ -317,7 +324,7 @@ Invoke-Pester ./tests -Output Detailed
 
 ## Roadmap
 
-- [ ] **`pp-governance-agent` skill** (in design — see [spec](docs/superpowers/specs/2026-10-15-pp-governance-agent-design.md) and [plan](docs/superpowers/plans/2026-10-15-pp-governance-agent.md)): a third skill, triggered by your AI tool, that runs live checks through the Microsoft Dataverse MCP server you already have connected — security role drift between environments, broken/stale connection references, and flows that fail to turn on after a solution import — and proposes fixes that only run on your confirmation. Positioned as a lightweight, zero-setup alternative to the piece of the retired Power Platform CoE Starter Kit that's gone: it finds problems *and* fixes them, not just a dashboard.
+- [ ] **Implement `pp-governance-agent`** — see [Skills in this repo](#skills-in-this-repo) for what it will do; the spec and plan are written, the skill itself isn't built yet.
 - [ ] Evaluation runs across the prompts in `evals/` with published results
 - [ ] Ready-made reference modules (data dictionary, flow on/off, role sync) in a companion `pp-ops-toolkit` repo
 - [ ] Azure DevOps pipeline variants

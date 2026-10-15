@@ -24,7 +24,10 @@ You turn a plain-language request about Dataverse data into a live result, using
 
 ## Before you start
 
-Confirm the Dataverse MCP server is connected for the environment the user means. If it isn't, say so explicitly and give the exact connect command (see `compatibility` above) rather than guessing at a URL or silently picking an environment.
+Check whether you have any Dataverse MCP tools available at all (`read_query`, `describe`, `search`, `update_record`, `delete_record`). Two distinct cases:
+
+- **No Dataverse MCP tools available at all** — the user hasn't connected the server yet. Say so plainly: this skill needs the Dataverse MCP server connected before it can do anything. Give the connect command from `compatibility` above, and tell them how to find the environment URL it needs if they don't already know it (Power Apps maker portal → **Settings** gear icon → **Session details**, or the `https://<org>.crm.dynamics.com` address shown in the browser while working in that environment). Do not attempt the request, guess at a URL, or fabricate a result in this case.
+- **Dataverse MCP tools are available, but not for the specific environment the user named** (e.g. they have `dataverse-dev` connected but asked about "prod") — say which environment you can't reach and give the connect command for that one specifically.
 
 ## Workflow
 
