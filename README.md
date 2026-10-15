@@ -293,7 +293,7 @@ Invoke-ScriptAnalyzer -Path . -Recurse -Settings ./PSScriptAnalyzerSettings.psd1
 Invoke-Pester ./tests -Output Detailed
 ```
 
-**Releasing:** bump `metadata.version` in `SKILL.md`, update `CHANGELOG.md`, then push a matching tag (`git tag v0.2.0 && git push --tags`). The release workflow builds and attaches the zip, the portable bundle, the chat instructions and checksums.
+**Releasing:** bump `metadata.version` in `SKILL.md`, update `CHANGELOG.md`, then publish a GitHub release with a matching tag (for example `v0.2.0`). The release workflow builds and attaches the zip, the portable bundle, the chat instructions and checksums.
 
 ---
 

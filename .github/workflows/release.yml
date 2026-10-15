@@ -1,9 +1,17 @@
 name: Release
 
-# Push a tag like v0.1.0 to publish a GitHub release with the downloadable packages attached.
+# Publish a release on GitHub (Releases → Draft a new release → tag vX.Y.Z → Publish).
+# This workflow then validates, builds and attaches the downloadable packages to it.
+# To rebuild the files for an existing release, run it manually from the Actions tab.
 on:
-  push:
-    tags: ["v*.*.*"]
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing release tag to (re)build files for, e.g. v0.1.0"
+        required: true
+        type: string
 
 permissions:
   contents: write
@@ -11,8 +19,12 @@ permissions:
 jobs:
   release:
     runs-on: ubuntu-latest
+    env:
+      TAG: ${{ github.event.release.tag_name || inputs.tag }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG }}
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -20,19 +32,19 @@ jobs:
       - name: Check the tag matches the skill version
         shell: bash
         run: |
-          tag="${GITHUB_REF_NAME#v}"
+          tag="${TAG#v}"
           skill_version=$(grep -m1 -E '^\s+version:' skills/power-platform-alm-toolkit/SKILL.md | sed -E 's/.*"([^"]+)".*/\1/')
           if [ "$tag" != "$skill_version" ]; then
-            echo "Tag v$tag does not match SKILL.md metadata.version $skill_version" >&2
+            echo "Release tag v$tag does not match SKILL.md metadata.version $skill_version" >&2
             exit 1
           fi
       - run: python scripts/validate.py
       - run: python scripts/check_templates.py
       - run: python scripts/build.py
-      - name: Publish release
+      - name: Attach packages to the release
         uses: softprops/action-gh-release@v2
         with:
-          generate_release_notes: true
+          tag_name: ${{ env.TAG }}
           files: |
             dist/power-platform-alm-toolkit.zip
             dist/portable/power-platform-alm-toolkit.md

@@ -27,12 +27,11 @@ Without the GitHub CLI: create an empty public repo on github.com, then `git rem
 
 ## 4. Publish the first release
 
-```bash
-git tag v0.1.0
-git push origin v0.1.0
-```
+1. On the repository page, select **Releases → Draft a new release**.
+2. **Choose a tag:** type `v0.1.0` and select *Create new tag on publish* (target: `main`).
+3. **Title:** `v0.1.0`. Select **Generate release notes**, edit them if you like, then **Publish release**.
 
-The *Release* workflow checks the tag matches `metadata.version` in `SKILL.md`, rebuilds, and attaches:
+The *Release* workflow then checks the tag matches `metadata.version` in `SKILL.md`, rebuilds, and attaches these files to the release within a couple of minutes:
 - `power-platform-alm-toolkit.zip`
 - `power-platform-alm-toolkit.md`
 - `power-platform-alm-toolkit.instructions.md`
@@ -48,4 +47,4 @@ The *Release* workflow checks the tag matches `metadata.version` in `SKILL.md`, 
 
 1. Change the skill, then update `CHANGELOG.md`.
 2. Bump `metadata.version` in `skills/power-platform-alm-toolkit/SKILL.md`.
-3. Tag `vX.Y.Z` and push the tag.
+3. Publish a GitHub release tagged `vX.Y.Z` (as in step 4).
