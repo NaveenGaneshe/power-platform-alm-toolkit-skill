@@ -5,11 +5,14 @@ description: >-
   copy, a full irreversible overwrite); tenant-to-tenant migration of one or every environment
   (the TenantToTenant-* PowerShell process, user-mapping file, approval, post-migration
   checklist, tenant-level settings); copying specific records between two environments; and
-  mapping/loading legacy, non-Dataverse data into Dataverse. Record and legacy-data modes run
-  live via the Dataverse MCP server if connected, else generate an equivalent script. Every mode
-  states a backup/rollback path before anything destructive runs. Use for migrate/copy/move/
-  lift-and-shift requests on an environment, tenant, records, or legacy data. Does not handle
-  solution promotion through dev/test/prod — power-platform-alm-toolkit handles that.
+  mapping/loading legacy, non-Dataverse data into Dataverse, with deduplication, upsert matching,
+  field transformations and incremental/repeatable runs. Record and legacy-data modes run live
+  via the Dataverse MCP server if connected, else generate an equivalent script. Every mode
+  states a backup/rollback path before anything destructive runs. Covers the kind of data
+  migration/integration work usually done with a dedicated paid ETL tool. Use for
+  migrate/copy/move/lift-and-shift requests on an environment, tenant, records, or legacy data.
+  Does not handle solution promotion through dev/test/prod — power-platform-alm-toolkit handles
+  that.
 license: MIT (see LICENSE.txt)
 compatibility: >-
   Modes one and two need the pac CLI (mode one) or the
@@ -66,10 +69,13 @@ Read `references/cross-tenant-migration.md` for the exact command sequence. This
 Read `references/record-lift-shift.md` for exact query shapes. Follows the same preview-before-write shape as `pp-data-ops-agent`, but across two environments:
 
 1. **Gather (source):** build the read-only `SELECT` for what the user described, call `describe` first to confirm schema, preview row count and a sample.
-2. **Gather (target):** call `describe` on the target too, and check whether matching records might already exist there (ask the user what counts as a duplicate, e.g. an alternate key) so they can decide first-load vs. incremental.
-3. **Preview both sides**, then stop — no write yet. This preview is also the rollback data for any record you're about to update (capture its current values), not just a row count.
-4. **Confirm, then copy**, record by record, in batches, with the same per-record failure handling and summary reporting as `pp-data-ops-agent`. Track every created record's ID in the summary, not just a count — that's what makes a rollback-by-delete possible later.
-5. **No-MCP fallback:** generate the source `SELECT` plus the per-record Web API calls against the target, exactly like `pp-data-ops-agent`'s no-MCP path, just across two environments.
+2. **Deduplicate the source set against itself**, not only against the target, before matching — report any duplicate groups and ask which to keep.
+3. **Gather (target):** call `describe` on the target too, and check whether matching records might already exist there (ask the user what counts as a duplicate, e.g. an alternate key) so they can decide first-load vs. incremental/upsert.
+4. **Apply any field transformations the mapping needs** (split/combine columns, recode values into Dataverse choice options, computed values) — state the exact rule, don't silently force a bad fit.
+5. **Preview both sides**, then stop — no write yet. This preview is also the rollback data for any record you're about to update (capture its current values), not just a row count.
+6. **If this is a repeatable/incremental job**, agree on a high-water-mark column (e.g. `modifiedon`) so a later run only processes new/changed records instead of re-scanning everything.
+7. **Confirm, then copy**, record by record, in batches, with the same per-record failure handling and summary reporting as `pp-data-ops-agent`. Track every created record's ID in the summary, not just a count — that's what makes a rollback-by-delete possible later.
+8. **No-MCP fallback:** generate the source `SELECT` plus the per-record Web API calls against the target, exactly like `pp-data-ops-agent`'s no-MCP path, just across two environments.
 
 ### Mode 4: legacy system → Dataverse migration
 
@@ -78,8 +84,9 @@ Read `references/legacy-to-dataverse.md` for the mapping and load recipe.
 1. **Be upfront about what this skill can and can't reach**: it has no live connection to the legacy system itself. Ask the user to provide the source data or schema (a CSV/JSON sample, an exported schema, or a plain description of the fields).
 2. **Propose a field mapping** — source field → target Dataverse table/column — flagging type mismatches and anything with no obvious Dataverse equivalent.
 3. **Schema changes need their own confirmation, separate from the data load.** If the target table/columns don't exist, call `describe` to confirm, then state exactly what `create_table`/`update_table` calls you're about to make and confirm before running them. Say plainly that creating a new table is reversible (it can be deleted) but adding a column to an existing table is effectively permanent in practice.
-4. **Load a small sample batch first** (10–20 records), show the result, then proceed to the full batched load only after that sample looks right — this is not optional.
-5. **No-MCP fallback:** generate the schema-creation calls and the batched load script instead of running them.
+4. **Deduplicate the provided source data and check for existing target matches** before loading — legacy exports are often messier than a live Dataverse copy, and a second load from the same source should upsert, not blindly re-create.
+5. **Load a small sample batch first** (10–20 records), show the result, then proceed to the full batched load only after that sample looks right — this is not optional.
+6. **No-MCP fallback:** generate the schema-creation calls and the batched load script instead of running them.
 
 ## Safety rules
 

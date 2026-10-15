@@ -44,6 +44,16 @@ Use the Dataverse MCP server's `create_table`/`update_table` tools for this, on 
 never invent a parameter shape for these; if uncertain what a tool needs, call `describe` first
 or ask the user to confirm the exact schema details rather than guessing.
 
+## Step 3.5: deduplicate and check for existing matches before loading
+
+Legacy exports are often messier than a live Dataverse-to-Dataverse copy — check the provided
+data for duplicates on whatever natural/alternate key applies (e.g. an external ID, an email, a
+legacy record number) before loading anything, and ask the user which to keep if duplicates are
+found. If the target table already has records that might correspond to legacy rows (a second
+or later load from the same source), check for matches the same way `record-lift-shift.md` does,
+so this can be an upsert (create what's new, update or skip what already exists) rather than
+blindly re-creating everything on every run.
+
 ## Step 4: staged load
 
 1. **Sample batch first** — 10 to 20 records, loaded via `create_record`. Show the result to the

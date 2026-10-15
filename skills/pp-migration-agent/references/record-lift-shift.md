@@ -34,6 +34,34 @@ If the table has a defined alternate key, prefer matching on that. If not, tell 
 that without one, this is a best-effort match and ask them to confirm the matching column(s)
 before proceeding — don't guess silently.
 
+## Deduplicate the source set itself, not just against the target
+
+Before matching against the target, check whether the source result set has duplicates *among
+itself* on the same key(s) — a plain re-export or an unclean source often does. Report any
+duplicate groups found and ask the user which to keep (first/last by a date column, or let them
+pick) rather than silently loading every duplicate as a separate target record.
+
+## Field transformations, not just type coercion
+
+A straight column-to-column copy isn't always the right mapping. Common transformations to call
+out and apply, on confirmation, rather than skipping or forcing a bad fit:
+- Splitting one source column into several target columns (e.g. a single "full name" field into
+  `firstname`/`lastname`), or the reverse (concatenating several into one).
+- Recoding source values into Dataverse choice-option values (e.g. a free-text "Active"/"Inactive"
+  string into the target's actual choice numeric values) — enumerate the distinct source values
+  and get the mapping confirmed before the load, the same way `legacy-to-dataverse.md` handles it.
+- Computing a derived value (e.g. a full address built from several source fields) — state the
+  exact formula/rule being applied, don't apply a silent default.
+
+## Incremental / repeatable runs
+
+If this isn't a one-time load — the user wants to run this lift & shift again later to pick up
+new or changed records — agree on a high-water-mark column (typically `modifiedon` or
+`createdon`) and have the user (or you, if tracking state across a session) record the latest
+value copied. A later run filters the source query to only rows after that value
+(`WHERE modifiedon > '<last-run-value>'`), instead of re-scanning and re-matching the entire
+source set every time.
+
 ## Preview, both sides, before any write
 
 Report: how many source records match, how many already appear to exist at the target (so the
@@ -50,7 +78,10 @@ before the write, not be reconstructed after. Batch at 100–200 records, report
 batches, isolate per-record failures (same as `pp-data-ops-agent`), and give a final summary:
 created (with every created record's ID, so a rollback-by-delete is possible later), updated
 (with the before-values captured, so an update can be manually reversed), skipped (already
-existed and no update requested), failed (with why).
+existed and no update requested, or a within-source duplicate dropped per the user's choice
+above), failed (with why). This is the data-quality report, not just a progress count — a user
+relying on this instead of a dedicated migration tool needs to see exactly what happened to
+every record, not just how many succeeded.
 
 Lookup columns on the source almost never resolve correctly on the target as-is (foreign key IDs
 differ between environments) — if a record being copied has a lookup to another table, resolve

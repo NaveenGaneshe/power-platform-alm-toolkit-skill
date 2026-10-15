@@ -22,7 +22,13 @@
     {
       "id": 4,
       "prompt": "We're migrating our data from an old on-prem CRM system into Dataverse. I can export it to CSV first. Can you help load it in?",
-      "expected_output": "Runs mode 4, states plainly that it has no live connection to the legacy system and asks for the exported CSV/schema, proposes a field mapping and flags type mismatches or fields with no Dataverse equivalent, treats schema creation (create_table/update_table) as a separate confirmation from the data load, loads a small sample batch first before the full load, tracks created record IDs for rollback, and does not attempt to connect to the on-prem system directly.",
+      "expected_output": "Runs mode 4, states plainly that it has no live connection to the legacy system and asks for the exported CSV/schema, proposes a field mapping and flags type mismatches or fields with no Dataverse equivalent, checks for duplicates within the source export and existing matches at the target before loading, treats schema creation (create_table/update_table) as a separate confirmation from the data load, loads a small sample batch first before the full load, tracks created record IDs for rollback, and does not attempt to connect to the on-prem system directly.",
+      "files": []
+    },
+    {
+      "id": 5,
+      "prompt": "Our legacy export has a single 'Customer Name' column but Dataverse needs firstname and lastname separately, and the old 'Status' field is free text ('Active'/'Inactive'/'On Hold') that needs to map to our choice column. Also we'll be running this load again next month for new customers only.",
+      "expected_output": "Applies the requested field transformations (splitting Customer Name, recoding the free-text status values to specific choice options) with the exact rule stated and confirmed rather than guessed, and sets up an incremental/repeatable run using a high-water-mark column so next month's run only processes new records instead of reloading everything.",
       "files": []
     }
   ]
