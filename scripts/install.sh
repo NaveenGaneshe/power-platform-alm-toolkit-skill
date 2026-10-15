@@ -31,7 +31,7 @@ TOOL is one of:
   gemini    Gemini CLI                          user: ~/.gemini/skills      project: .gemini/skills
   all       claude + agents (covers every tool above without duplicates)
 
-Installs every skill under skills/ (currently: power-platform-alm-toolkit, pp-data-ops-agent, pp-governance-agent).
+Installs every skill under skills/ (currently: power-platform-alm-toolkit, pp-data-ops-agent, pp-governance-agent, pp-migration-agent).
 Claude apps (claude.ai / desktop / mobile) don't read local folders: upload the matching
 dist/<skill-name>.zip instead.
 EOF
@@ -92,7 +92,7 @@ if [[ -n "$SKILLS_ROOT" ]]; then
 elif [[ "$UNINSTALL" -eq 1 ]]; then
   # Uninstall without a source checkout: fall back to the one skill name known at release time
   # plus any already-installed folder names, so --uninstall still works from a bare curl pipe.
-  SKILL_NAMES=("power-platform-alm-toolkit" "pp-data-ops-agent" "pp-governance-agent")
+  SKILL_NAMES=("power-platform-alm-toolkit" "pp-data-ops-agent" "pp-governance-agent" "pp-migration-agent")
 fi
 
 target_dir() {

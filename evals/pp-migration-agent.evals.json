@@ -1,0 +1,29 @@
+{
+  "skill_name": "pp-migration-agent",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Can you copy our contoso-dev environment into contoso-uat? I want a full copy with data.",
+      "expected_output": "Runs mode 1, states the full-overwrite/irreversible/no-production-target warning before asking for confirmation, asks whether contoso-uat has content worth backing up first (pac admin backup) before proceeding, confirms MinimalCopy vs FullCopy, gives the exact pac admin copy --type FullCopy command (or runs it only after explicit confirmation if shell execution is available), states the pac admin restore rollback path, and mentions the post-copy checklist (custom connector IDs, canvas app revision limit).",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "We're acquiring another company and need to move their entire Dataverse tenant into ours.",
+      "expected_output": "Runs mode 2, clarifies the scope is every environment in the source tenant (not just one), enumerates them via pac admin list, states this is a multi-session guided process repeated per environment (not a single action), recommends a test migration via a sandbox copy first and a source backup before each migration, walks the TenantToTenant-* sequence per environment including the user-mapping file, stops explicitly at each environment's destination-tenant approval step without assuming it happened, gives the full post-migration checklist per environment, and separately covers the tenant-level artifacts with no migrate command (DLP policies, environment groups, tenant settings) once all environments are moved.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "I need to move all 'VIP' tagged accounts from our old regional environment into our new consolidated environment, not the whole environment.",
+      "expected_output": "Runs mode 3, builds the source SELECT, checks the target for existing matches, previews both sides before any write (capturing before-values for any record that would be updated), asks what counts as a duplicate if no alternate key is obvious, and only creates/updates target records after explicit confirmation, tracking created record IDs in the summary, with per-record failure isolation and a final created/updated/skipped/failed summary.",
+      "files": []
+    },
+    {
+      "id": 4,
+      "prompt": "We're migrating our data from an old on-prem CRM system into Dataverse. I can export it to CSV first. Can you help load it in?",
+      "expected_output": "Runs mode 4, states plainly that it has no live connection to the legacy system and asks for the exported CSV/schema, proposes a field mapping and flags type mismatches or fields with no Dataverse equivalent, treats schema creation (create_table/update_table) as a separate confirmation from the data load, loads a small sample batch first before the full load, tracks created record IDs for rollback, and does not attempt to connect to the on-prem system directly.",
+      "files": []
+    }
+  ]
+}
