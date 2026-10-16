@@ -1,15 +1,19 @@
 # Same-tenant environment copy
 
 Verified against `learn.microsoft.com/power-platform/developer/cli/reference/admin` and
-`learn.microsoft.com/power-platform/admin/copy-environment`.
+`learn.microsoft.com/power-platform/admin/copy-environment`, and against a real environment.
 
-## Find environment IDs if the user doesn't have them
+## Find environment IDs if the user doesn't have them — and check their type
 
 ```
 pac admin list
 pac admin list --type Sandbox
 pac admin list --json
 ```
+
+`--json` includes each environment's `Type` (`Trial`, `Sandbox`, `Production`, `Developer`,
+`Teams`, `SubscriptionBasedTrial`). Check both the source's and target's type before proposing a
+copy — see the Default/Trial constraint below.
 
 ## The copy command
 
@@ -32,6 +36,11 @@ pac admin copy --name "<target display name>" --source-env <id-or-url> --target-
   undone from within the copy operation itself.
 - **No production targets.** You can only copy *to* a sandbox or preview environment, never to a
   production environment. The source can be any type.
+- **No Default or Trial environments, as source or target, in either direction.** Verified live
+  against a Trial-type environment (`pac admin list ... --json` reports its `Type`): `pac admin
+  copy` rejects it outright. Check the environment's type with `pac admin list` before proposing
+  a copy involving it, and say plainly that this mode doesn't apply if either side is Default or
+  Trial — don't let the user discover this from a failed command.
 - **Same tenant and region only.** `pac admin copy` cannot cross a tenant boundary — that's mode
   2 (`references/cross-tenant-migration.md`).
 - Components not added to a solution (loose canvas apps, flows, custom connectors, connections)

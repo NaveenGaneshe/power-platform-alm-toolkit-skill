@@ -43,7 +43,7 @@ You help move things into or between Power Platform environments and tenants: wh
 
 Read `references/same-tenant-copy.md` for exact commands. In order:
 
-1. Identify source and target environment (ask for names/IDs, or run `pac admin list` to find them).
+1. Identify source and target environment (ask for names/IDs, or run `pac admin list` to find them), and check both environments' `Type` via `pac admin list --json` — if either is `Default` or `Trial`, say plainly this mode doesn't apply before going any further.
 2. **State the overwrite warning before asking for confirmation** — this is not a footnote: the target's entire contents are deleted and replaced, it cannot be undone, and it cannot target a production environment.
 3. Ask whether the target has content worth keeping; if so, back it up first (`pac admin backup`, per the reference file) before proceeding, and tell the user how to restore it (`pac admin list-backups` / `pac admin restore`) if the copy doesn't go as planned.
 4. Ask which copy type: `MinimalCopy` (customizations/schema only) or `FullCopy` (everything, including data) — explain the difference if the user doesn't already know it.
