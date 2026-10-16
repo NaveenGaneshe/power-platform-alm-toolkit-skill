@@ -12,6 +12,29 @@ the same order, invoice, contact, or ticket twice. Before designing any write pa
 - Where it's stored on both sides (a dedicated column on the Dataverse table, and whichever
   field the external platform's API uses for idempotent request handling — ask the user to check
   their platform's API docs for this, since conventions vary and this skill can't guess).
+
+**Storing a key on your own side does nothing by itself — something has to enforce uniqueness
+with it.** There are exactly two ways that happens, and the hardest case to design for is not "a
+retry before anything happened," it's: the write actually commits on the external platform, but
+the response is lost (timeout, dropped connection, a crash between the write and the
+acknowledgement) before the processing flow learns it succeeded. From the retrying side, a
+committed-but-unacknowledged write is indistinguishable from one that never happened — so the
+retry *will* be attempted, and the only question is what stops it from creating a duplicate:
+
+1. **The external platform's write API natively supports idempotent requests** (commonly an
+   `Idempotency-Key`-style request header or field it documents itself) — if so, send the same
+   key on every retry and trust the platform to return the original record instead of creating a
+   second one. Confirm this is actually documented before relying on it; don't assume it.
+2. **No native support — fall back to a pre-write existence check.** Before every write attempt,
+   including retries, query the external platform (or Dataverse, for an inbound sync) for an
+   existing record matching the idempotency key, and skip the write if one is found. This turns
+   "write, maybe twice" into "check, then write," which is safe under retries as long as the
+   check itself is reliable — call out explicitly that this doesn't protect against two
+   *concurrent* retries racing each other (the processing-flow design in
+   `sync-infrastructure.md` processes one queue row at a time specifically to avoid that).
+
+Decide and state which of these two applies before calling the write safe — "it has an
+idempotency key" is not itself an answer to "what happens on a lost-ack retry."
 - That a retry re-sends the same key rather than generating a new one.
 
 ## Sandbox-first validation

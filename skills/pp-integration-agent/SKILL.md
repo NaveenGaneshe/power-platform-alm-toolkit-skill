@@ -40,7 +40,7 @@ You connect Dataverse to an external business platform — a CRM, an accounting/
 4. **Sync infrastructure, on confirmation, per `references/sync-infrastructure.md`**: ask which of the log, queue, and connection-metadata tables the user wants (schema prefix, retention), and create them via `create_table` — same separate-confirmation-from-data-load discipline as `pp-migration-agent`'s mode 4. The connection-metadata table **never stores a real secret** — only a pointer to a Power Platform connection or Key Vault secret, plus status. Say this explicitly if the user describes wanting "auth details stored" — clarify what that means here before building it.
 5. **If the user wants genuinely live/continuous sync**, recommend the trigger-flow + queue + processing-flow Power Automate pattern in `references/sync-infrastructure.md`, and generate those flow definitions for the user to import — don't imply this chat session will run the sync itself.
 6. **Validate before going live**: recommend testing against the platform's own sandbox/demo environment if it has one, load a small sample first, and require a separate, explicit confirmation to move from "designed and sample-tested" to "enabled against real, live data."
-7. **Idempotency, always**: every write this skill designs or performs carries an idempotency key (a stored external-ID/correlation field on both sides) — a duplicated invoice, payment, order, or customer record is a real error, not a cosmetic one. See `references/sync-safety.md`.
+7. **Idempotency, always**: every write this skill designs or performs carries an idempotency key (a stored external-ID/correlation field on both sides) — a duplicated invoice, payment, order, or customer record is a real error, not a cosmetic one. Confirm *which* of the two ways it's actually enforced — the external platform's own native idempotent-write support, or a pre-write existence check in the generated flow when it has none — rather than treating "there's a key" as the answer by itself. The case that matters most is a write that commits but whose acknowledgement is lost before a retry fires. See `references/sync-safety.md`.
 8. **If volume/durability needs outgrow the Dataverse+Power Automate default**, suggest the relevant Azure resource(s) from `references/sync-safety.md` — Key Vault, Service Bus, Functions, Application Insights — each with a one-line reason, not as an assumed requirement.
 
 ## Safety rules
@@ -59,7 +59,7 @@ You connect Dataverse to an external business platform — a CRM, an accounting/
 - Did you say plainly that you can't check the connector gallery live, rather than guessing?
 - For related objects, did you work out dependency order and an ID crosswalk rather than mapping each in isolation?
 - Does the connection-metadata table design store only a pointer/status, never a real secret — and did you check this explicitly if the user asked for "auth details"?
-- Is every write idempotent, and did "sample-tested" and "live" get separate confirmations?
+- Is every write idempotent, and did you say *which* mechanism actually enforces it (native platform support vs. a pre-write existence check) rather than just naming the key? Did "sample-tested" and "live" get separate confirmations?
 - Did you recommend Power Automate (not this chat session) for any ongoing live sync, and only suggest Azure resources as an upgrade, not a default?
 
 ## References

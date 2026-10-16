@@ -30,6 +30,12 @@
       "prompt": "We're expecting a very high volume of orders per minute and need this to be reliable with no duplicates even if something retries.",
       "expected_output": "States that every write carries an idempotency key as a non-negotiable requirement, and suggests Azure Service Bus (and possibly Functions/Application Insights) as an upgrade over the default Dataverse queue table given the stated volume, with a one-line reason for each suggested resource rather than assuming the Azure path by default.",
       "files": []
+    },
+    {
+      "id": 6,
+      "prompt": "What happens with your idempotency key if the write actually succeeds on the external platform, but we never get the response back (timeout, dropped connection) and the processing flow retries it with the same key?",
+      "expected_output": "Explains the harder case explicitly, not just 'retry before anything happened': a committed write whose acknowledgement is lost is indistinguishable from a write that never happened, from the retrying side's point of view, so the external platform's own API (or the custom connector's logic) must be the one that recognizes the repeated idempotency key and returns the existing record instead of creating a second one — this skill's job is to make sure that key is sent identically on every retry and to say plainly if the external platform's API doesn't document idempotent-write support, in which case recommend a pre-write existence check by that key before retrying, since nothing else can safely guarantee single-write-only this agent's generated code can't control the server. Should also note that this exact lost-ack-then-retry scenario is the one to cover first in any future automated eval harness, since it is a stricter and more realistic test than the no-conflict happy path.",
+      "files": []
     }
   ]
 }
