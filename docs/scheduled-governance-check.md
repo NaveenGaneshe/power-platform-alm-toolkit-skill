@@ -26,8 +26,12 @@ You only touch GitHub's Settings UI — no file or code changes needed after thi
 |---|---|
 | `ANTHROPIC_API_KEY` | Your Claude API key |
 | `DATAVERSE_CLIENT_ID` | App registration (service principal) client ID |
-| `DATAVERSE_CLIENT_SECRET` | That app registration's client secret |
 | `DATAVERSE_TENANT_ID` | Your Azure AD tenant ID |
+
+No client secret is needed or stored — this workflow authenticates to Azure AD via **federated
+credentials (OIDC)**. On the app registration, go to **Certificates & secrets > Federated
+credentials > Add credential**, pick the "GitHub Actions deploying Azure resources" scenario, and
+point it at this repo and branch `main`.
 
 Grant the service principal a **read-only** security role in every environment you list below.
 The skill never writes, but it's worth the credential itself not being *able* to either.
@@ -42,11 +46,11 @@ The skill never writes, but it's worth the credential itself not being *able* to
 
 Comma-separated `name=url` pairs. Add or remove an environment here any time — no workflow edit.
 
-### 3. Verify the Dataverse MCP server's auth flags
+### 3. Verify the Dataverse MCP server's auth flag
 
-The workflow registers each environment's Dataverse MCP server with placeholder flags
-(`--client-id`, `--client-secret`, `--tenant-id`). Confirm these match your installed
-`@microsoft/dataverse` package's actual non-interactive/service-principal auth options
+The workflow acquires a Dataverse access token via `az account get-access-token` and passes it to
+the MCP server with `--access-token`. Confirm that flag matches your installed
+`@microsoft/dataverse` package's actual option for accepting a pre-acquired bearer token
 (`npx -y @microsoft/dataverse mcp --help`) before relying on this in production — this is the
 one piece specific to the MCP server's own version that this workflow can't verify for you.
 
@@ -59,6 +63,14 @@ new issue it files.
 
 Edit the `cron:` line in `.github/workflows/governance-check.yml`. Cron is UTC and reads
 `minute hour day month weekday` — `0 6 * * *` is 6am UTC daily.
+
+## Safety model
+
+- **Run-as identity**: a read-only Dataverse service principal, authenticated via Azure AD
+  federated credentials — no client secret is stored anywhere, in GitHub or otherwise.
+- **Blast radius**: none. Every check this workflow runs is read-only, and the skill it invokes
+  never applies a fix without an explicit human confirmation that an unattended run can't give.
+- **Rollback**: nothing to roll back — this workflow never changes state.
 
 ## Alternatives
 

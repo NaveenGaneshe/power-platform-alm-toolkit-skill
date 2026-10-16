@@ -6,8 +6,11 @@ name: Scheduled Governance Check
 #   1. Add these repo secrets (Settings > Secrets and variables > Actions > Secrets):
 #        ANTHROPIC_API_KEY      - your Claude API key
 #        DATAVERSE_CLIENT_ID    - app registration (service principal) client id
-#        DATAVERSE_CLIENT_SECRET
 #        DATAVERSE_TENANT_ID
+#      No client secret is needed or stored: this workflow authenticates via Azure AD federated
+#      credentials (OIDC). On the app registration, add a federated credential under
+#      Certificates & secrets > Federated credentials, scenario "GitHub Actions deploying Azure
+#      resources", pointed at this repo and branch `main`.
 #      The service principal should be granted a READ-ONLY security role in each environment
 #      below -- this workflow and the skill it runs never write, but the credential itself
 #      should not be *able* to write either, as a second layer of safety.
@@ -32,6 +35,7 @@ on:
 permissions:
   contents: read
   issues: write
+  id-token: write
 
 concurrency:
   group: governance-check
@@ -50,11 +54,15 @@ jobs:
       - name: Install Claude Code CLI
         run: npm install -g @anthropic-ai/claude-code
 
-      - name: Connect Dataverse MCP for each environment
+      - name: Azure login (OIDC, no stored secret)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.DATAVERSE_CLIENT_ID }}
+          tenant-id: ${{ secrets.DATAVERSE_TENANT_ID }}
+          allow-no-subscriptions: true
+
+      - name: Acquire a read-only Dataverse token per environment
         env:
-          CLIENT_ID: ${{ secrets.DATAVERSE_CLIENT_ID }}
-          CLIENT_SECRET: ${{ secrets.DATAVERSE_CLIENT_SECRET }}
-          TENANT_ID: ${{ secrets.DATAVERSE_TENANT_ID }}
           ENVIRONMENTS: ${{ vars.GOVERNANCE_ENVIRONMENTS }}
         run: |
           set -euo pipefail
@@ -66,11 +74,29 @@ jobs:
           for pair in "${PAIRS[@]}"; do
             name="${pair%%=*}"
             url="${pair#*=}"
+            token=$(az account get-access-token --resource "$url" --query accessToken -o tsv)
+            echo "::add-mask::$token"
+            var_name="TOKEN_$(echo "$name" | tr -c 'A-Za-z0-9' '_')"
+            echo "$var_name=$token" >> "$GITHUB_ENV"
+          done
+
+      - name: Connect Dataverse MCP for each environment
+        env:
+          ENVIRONMENTS: ${{ vars.GOVERNANCE_ENVIRONMENTS }}
+        run: |
+          set -euo pipefail
+          IFS=',' read -ra PAIRS <<< "$ENVIRONMENTS"
+          for pair in "${PAIRS[@]}"; do
+            name="${pair%%=*}"
+            url="${pair#*=}"
+            var_name="TOKEN_$(echo "$name" | tr -c 'A-Za-z0-9' '_')"
+            token="${!var_name}"
             echo "Connecting MCP server for $name ($url)"
-            # TODO: confirm these flags against your installed @microsoft/dataverse mcp version's
-            # own non-interactive auth docs -- this is the one line this workflow can't verify for you.
+            # TODO: confirm this flag against your installed @microsoft/dataverse mcp version's
+            # own docs for accepting a pre-acquired bearer token -- this is the one piece this
+            # workflow can't verify for you.
             claude mcp add "dataverse-$name" -t stdio -- npx -y @microsoft/dataverse mcp "$url" \
-              --client-id "$CLIENT_ID" --client-secret "$CLIENT_SECRET" --tenant-id "$TENANT_ID"
+              --access-token "$token"
           done
 
       - name: Run governance check (read-only, no fixes)
