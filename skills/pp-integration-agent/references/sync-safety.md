@@ -35,6 +35,12 @@ retry *will* be attempted, and the only question is what stops it from creating 
 
 Decide and state which of these two applies before calling the write safe — "it has an
 idempotency key" is not itself an answer to "what happens on a lost-ack retry."
+
+When mechanism 2 applies and the generated output is a PowerShell script, copy
+`assets/IdempotentSync.psm1`'s `Invoke-IdempotentWrite` pattern (check, then create) rather than
+writing the check-then-write logic from scratch — it's the same pre-write existence check
+described above, already verified against the lost-acknowledgement scenario in
+`tests/IdempotentSync.Tests.ps1`.
 - That a retry re-sends the same key rather than generating a new one.
 
 ## Sandbox-first validation

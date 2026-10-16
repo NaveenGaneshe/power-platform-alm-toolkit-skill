@@ -70,3 +70,4 @@ You connect Dataverse to an external business platform — a CRM, an accounting/
 | `references/entity-mapping.md` | Mapping objects between Dataverse and the external platform, especially related objects |
 | `references/sync-infrastructure.md` | Creating the log/queue/connection-metadata tables, or designing the live-sync Power Automate pattern |
 | `references/sync-safety.md` | Idempotency, sandbox-first testing, reconciliation, and the Azure-resource upgrade path |
+| `assets/IdempotentSync.psm1` | Reference implementation of the pre-write existence-check mechanism, verified against the lost-acknowledgement-then-retry case in `tests/IdempotentSync.Tests.ps1` — point the user at this when a generated script needs the mechanism and the external platform has no native idempotent-write support |

@@ -321,13 +321,15 @@ The skill itself needs nothing beyond a supported AI tool. The automation it gen
 │   └── pp-integration-agent/              #   external platform connectors, mapping, sync infra — no product names
 │       ├── SKILL.md
 │       ├── references/                    #     connector-options, entity-mapping, sync-infrastructure, sync-safety
+│       ├── assets/IdempotentSync.psm1     #     pre-write existence-check reference implementation
 │       └── LICENSE.txt
 ├── scripts/
 │   ├── install.sh / install.ps1         # installers for every supported tool — install every skill above
 │   ├── validate.py                      # Agent Skills spec validation, run across all skills
 │   ├── check_templates.py               # parses every YAML/JSON example inside any skill
 │   └── build.py                         # builds each skill's zip + portable bundle into dist/
-├── tests/Dataverse.Tests.ps1            # Pester tests (HTTP fully mocked)
+├── tests/                                # Pester tests (HTTP fully mocked) — Dataverse.Tests.ps1,
+│                                         # IdempotentSync.Tests.ps1 (covers the lost-ack-then-retry case)
 ├── docs/                                # chat-assistants.md (ChatGPT, Gemini, Copilot Studio), publishing.md,
 │                                         # superpowers/specs|plans (design docs for in-progress skills)
 ├── examples/prompts.md                  # prompt library
