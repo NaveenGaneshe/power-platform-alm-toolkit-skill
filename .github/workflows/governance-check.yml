@@ -1,0 +1,111 @@
+name: Scheduled Governance Check
+
+# Runs the pp-governance-agent skill, read-only, against the Dataverse environments you list
+# below, then posts the report as a new GitHub issue. Setup for non-technical users:
+#
+#   1. Add these repo secrets (Settings > Secrets and variables > Actions > Secrets):
+#        ANTHROPIC_API_KEY      - your Claude API key
+#        DATAVERSE_CLIENT_ID    - app registration (service principal) client id
+#        DATAVERSE_CLIENT_SECRET
+#        DATAVERSE_TENANT_ID
+#      The service principal should be granted a READ-ONLY security role in each environment
+#      below -- this workflow and the skill it runs never write, but the credential itself
+#      should not be *able* to write either, as a second layer of safety.
+#
+#   2. Add this repo variable (Settings > Secrets and variables > Actions > Variables):
+#        GOVERNANCE_ENVIRONMENTS = Production=https://contoso.crm.dynamics.com,UAT=https://contoso-uat.crm.dynamics.com
+#      Comma-separated name=url pairs. No file or YAML edits needed to add/remove an environment.
+#
+#   3. Adjust the cron schedule below if 6am UTC daily doesn't suit you, or just use the
+#      "Run workflow" button on the Actions tab to run it on demand.
+#
+# One setup step this workflow can't do for you: the exact non-interactive/service-principal
+# auth flags for the Dataverse MCP server depend on the version of @microsoft/dataverse you have
+# installed. Check its own docs (`npx -y @microsoft/dataverse mcp --help`) and adjust the
+# "Connect Dataverse MCP" step's claude mcp add line to match before relying on this in production.
+
+on:
+  schedule:
+    - cron: "0 6 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: governance-check
+  cancel-in-progress: false
+
+jobs:
+  governance-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Claude Code CLI
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Connect Dataverse MCP for each environment
+        env:
+          CLIENT_ID: ${{ secrets.DATAVERSE_CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.DATAVERSE_CLIENT_SECRET }}
+          TENANT_ID: ${{ secrets.DATAVERSE_TENANT_ID }}
+          ENVIRONMENTS: ${{ vars.GOVERNANCE_ENVIRONMENTS }}
+        run: |
+          set -euo pipefail
+          if [ -z "${ENVIRONMENTS:-}" ]; then
+            echo "::error::Repo variable GOVERNANCE_ENVIRONMENTS is not set. See the comment at the top of this workflow file."
+            exit 1
+          fi
+          IFS=',' read -ra PAIRS <<< "$ENVIRONMENTS"
+          for pair in "${PAIRS[@]}"; do
+            name="${pair%%=*}"
+            url="${pair#*=}"
+            echo "Connecting MCP server for $name ($url)"
+            # TODO: confirm these flags against your installed @microsoft/dataverse mcp version's
+            # own non-interactive auth docs -- this is the one line this workflow can't verify for you.
+            claude mcp add "dataverse-$name" -t stdio -- npx -y @microsoft/dataverse mcp "$url" \
+              --client-id "$CLIENT_ID" --client-secret "$CLIENT_SECRET" --tenant-id "$TENANT_ID"
+          done
+
+      - name: Run governance check (read-only, no fixes)
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          ENVIRONMENTS: ${{ vars.GOVERNANCE_ENVIRONMENTS }}
+        run: |
+          set -euo pipefail
+          names=$(echo "$ENVIRONMENTS" | tr ',' '\n' | cut -d= -f1 | paste -sd ', ')
+          claude -p "Use the pp-governance-agent skill. Run all three checks (role drift, connection reference health, post-import flow health) against these environments: $names. Produce the markdown report only. This is a scheduled, unattended run -- do not propose, confirm, or apply any fix." \
+            --output-format json > governance-report.json
+
+      - name: Extract report text
+        run: |
+          node -e "
+            const fs = require('fs');
+            const data = JSON.parse(fs.readFileSync('governance-report.json', 'utf8'));
+            const text = data.result ?? data.content ?? JSON.stringify(data, null, 2);
+            fs.writeFileSync('governance-report.md', text);
+          "
+
+      - name: Ensure report label exists
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh label create governance-report \
+            --color BFD4F2 \
+            --description "Automated governance agent report" \
+            --force
+
+      - name: Open issue with report
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh issue create \
+            --title "Governance report - $(date -u +%Y-%m-%d)" \
+            --label governance-report \
+            --body-file governance-report.md
