@@ -1,6 +1,8 @@
 # Prompt library
 
-Copy, adjust the names, and send. You don't need to mention the skill: it activates on Power Platform requests. Add scale and risk details ("about 50k records", "production") for better designs.
+Copy, adjust the names, and send. You don't need to mention the skill: it activates on Power Platform requests. Add scale and risk details ("about 50k records", "production") for better designs. See the [user guide](../docs/user-guide.md) for how to phrase requests for each skill specifically.
+
+The first five sections below are for `power-platform-alm-toolkit` (generates code for you to commit). The four sections after that are for the live agents — they act now, or generate a ready-to-run equivalent.
 
 ## Data & Schema Management
 
@@ -41,3 +43,37 @@ Copy, adjust the names, and send. You don't need to mention the skill: it activa
 - "What's the PAC CLI command to unpack a solution with both managed and unmanaged?"
 - "Which `import-solution` input makes the action use my deployment settings file?"
 - "How do I turn off a cloud flow through the Dataverse Web API?"
+
+---
+
+## Live agent: `pp-data-ops-agent` (queries and bulk record changes)
+
+- "How many contacts have no email address?"
+- "Show me the 10 most recently created accounts."
+- "Deactivate every case open over 90 days, with a preview first."
+- "Update the status on every open opportunity older than a year to 'At Risk', after you show me what would change."
+- "Delete the 5 test records we created yesterday with 'TEST-' in the name." *(deletes get their own separate confirmation)*
+
+## Live agent: `pp-governance-agent` (security roles, connection references, flow health)
+
+- "Audit security role drift between our dev and prod environments."
+- "Why won't my flows turn back on after the solution import?"
+- "Health check my environment." *(runs all three checks: role drift, connection references, flow health)*
+- "Does anyone have System Administrator in prod who shouldn't?"
+- "Check our connection references after the UAT import — I think a few are broken."
+
+## Live agent: `pp-migration-agent` (environment copy, tenant migration, record/legacy data)
+
+- "Copy our dev environment into a new UAT sandbox."
+- "We're acquiring another company and need to move their entire Dataverse tenant into ours."
+- "Move these accounts, their contacts, and their open opportunities to the new environment, keeping the relationships intact."
+- "Move all 'VIP' tagged accounts from our old regional environment into our consolidated one, not the whole environment."
+- "We're migrating our data from an old CRM system into Dataverse — I can export it to CSV first."
+
+## Live agent: `pp-integration-agent` (external platform connectors and sync)
+
+- "Connect Dataverse to our CRM so contacts and accounts stay in sync."
+- "We want invoices created in Dataverse to show up in our accounting system automatically."
+- "We need this to sync continuously, not just once a day."
+- "We're expecting a high volume of orders per minute and need no duplicates even if something retries."
+- "Can you store the connection details and keep a log of every sync, plus a queue so failed syncs retry?"

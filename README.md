@@ -40,6 +40,7 @@ Agent:  1. Confirms the Dataverse MCP connection for both environments
 - [Supported AI tools](#supported-ai-tools)
 - [Installation](#installation)
 - [Usage](#usage)
+- [User guide and prompt library](#user-guide-and-prompt-library)
 - [What you get](#what-you-get)
 - [Prerequisites for the generated automation](#prerequisites-for-the-generated-automation)
 - [Repository layout](#repository-layout)
@@ -254,6 +255,13 @@ Same idea — describe what you need, no need to name the skill — but these fo
 | `pp-integration-agent` | "Connect Dataverse to our CRM so contacts stay in sync." / "We need this to sync continuously with no duplicates even on retry." |
 
 Each one tells you plainly what it needs (a Dataverse MCP connection, `pac`/PowerShell, or neither) and what it can't do live before it does anything — see each skill's own `SKILL.md` for the full picture, or the "Skills in this repo" table above for a one-line summary of each.
+
+---
+
+## User guide and prompt library
+
+- **[`docs/user-guide.md`](docs/user-guide.md)** — how to phrase requests to get a good result on the first try, for each of the five skills: what to say, what details matter, and what to expect back.
+- **[`examples/prompts.md`](examples/prompts.md)** — copy-paste-ready prompts for every skill, including all four live agents.
 
 ---
 
