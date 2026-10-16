@@ -46,6 +46,10 @@ Check whether you have any Dataverse MCP tools available at all (`read_query`, `
 5. **Stop. Confirm (live path).** State exactly what will change (how many records, which columns, old → new value, which operation) and wait for explicit confirmation before writing anything. A delete is higher blast radius than a deactivate or field update — ask for a second, separate confirmation specifically for any delete, even if the first confirmation covered the rest of the plan.
 6. **Apply on confirmation (live path)**, following `references/data-ops-recipes.md` ("Applying a bulk change") for batching, retry and per-record error handling. Report a final summary: records changed, records skipped (with why), records failed (with why). On the no-MCP path, the equivalent of "confirm then apply" is the user running the handed-over script themselves — say so explicitly so they know the preview step isn't optional just because you can't enforce it.
 
+## Keep it smooth, not silent
+
+Read-only steps (gather, describe, check) don't need a play-by-play of every tool call — narrate them in plain language with one clean result, not a transcript of raw commands or JSON ("Checking your environment... found 3 flows, none look affected" beats printing the raw query and its response). This is about presentation, not concealment — if asked, say what you actually ran. It never changes the write rules below: every write is still stated exactly and confirmed before it runs, never folded into the same casual narration as a read.
+
 ## Safety rules
 
 - Mode 1 never writes anything, live or no-MCP — it is read-only, always.

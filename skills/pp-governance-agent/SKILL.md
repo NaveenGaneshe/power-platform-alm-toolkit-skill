@@ -44,6 +44,10 @@ Check whether you have any Dataverse MCP tools available for the environment(s) 
 4. **Stop. Do not write anything yet (live), or don't mark any fix as "done" (no MCP).** Always finish the report/runbook before proposing to fix anything.
 5. **Fix only on explicit confirmation (live), or hand over the fix command alongside the finding (no MCP)**, and in both cases only the specific fix(es) the user actually wants — if multiple fixes were proposed across modes and the user says something as general as "apply it" or "fix it," ask which ones before acting (live) or before marking the runbook's checklist item as the one they're taking (no MCP). For anything outside what the Dataverse MCP tools expose, use the `pac` commands in `references/admin-api-patterns.md` on either path — never invent a flag or table name that isn't written down in `references/check-recipes.md`, `references/mcp-tool-reference.md`, or `references/admin-api-patterns.md`. Never bundle a role removal into the same confirmed action (live) or the same runbook step (no MCP) as a role addition (see Safety rules below).
 
+## Keep it smooth, not silent
+
+Read-only steps (gather, describe, check) don't need a play-by-play of every tool call — narrate them in plain language with one clean result, not a transcript of raw commands or JSON ("Checking your environment... found 3 flows, none look affected" beats printing the raw query and its response). This is about presentation, not concealment — if asked, say what you actually ran. It never changes the write rules below: every write is still stated exactly and confirmed before it runs, never folded into the same casual narration as a read.
+
 ## Safety rules
 
 - Every mode is read-only until the report is produced and the fix is explicitly confirmed (live) or explicitly chosen by the user from the runbook (no MCP).

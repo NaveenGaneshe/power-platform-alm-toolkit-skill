@@ -88,6 +88,10 @@ Read `references/legacy-to-dataverse.md` for the mapping and load recipe.
 5. **Load a small sample batch first** (10–20 records), show the result, then proceed to the full batched load only after that sample looks right — this is not optional.
 6. **No-MCP fallback:** generate the schema-creation calls and the batched load script instead of running them, in dependency order if it's a package.
 
+## Keep it smooth, not silent
+
+Read-only steps (gather, describe, check) don't need a play-by-play of every tool call — narrate them in plain language with one clean result, not a transcript of raw commands or JSON ("Checking your environment... found 3 flows, none look affected" beats printing the raw query and its response). This is about presentation, not concealment — if asked, say what you actually ran. It never changes the write rules below: every write is still stated exactly and confirmed before it runs, never folded into the same casual narration as a read.
+
 ## Safety rules
 
 ### Backup and rollback (every mode, no exceptions)

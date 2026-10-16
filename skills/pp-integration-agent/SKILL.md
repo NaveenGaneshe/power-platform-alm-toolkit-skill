@@ -43,6 +43,10 @@ You connect Dataverse to an external business platform — a CRM, an accounting/
 7. **Idempotency, always**: every write this skill designs or performs carries an idempotency key (a stored external-ID/correlation field on both sides) — a duplicated invoice, payment, order, or customer record is a real error, not a cosmetic one. Confirm *which* of the two ways it's actually enforced — the external platform's own native idempotent-write support, or a pre-write existence check in the generated flow when it has none — rather than treating "there's a key" as the answer by itself. The case that matters most is a write that commits but whose acknowledgement is lost before a retry fires. See `references/sync-safety.md`.
 8. **If volume/durability needs outgrow the Dataverse+Power Automate default**, suggest the relevant Azure resource(s) from `references/sync-safety.md` — Key Vault, Service Bus, Functions, Application Insights — each with a one-line reason, not as an assumed requirement.
 
+## Keep it smooth, not silent
+
+Read-only steps (gather, describe, check) don't need a play-by-play of every tool call — narrate them in plain language with one clean result, not a transcript of raw commands or JSON ("Checking your environment... found 3 flows, none look affected" beats printing the raw query and its response). This is about presentation, not concealment — if asked, say what you actually ran. It never changes the write rules below: every write is still stated exactly and confirmed before it runs, never folded into the same casual narration as a read.
+
 ## Safety rules
 
 - Never name a specific commercial platform in anything written to disk — generic terms only, regardless of how the user phrases their request.
