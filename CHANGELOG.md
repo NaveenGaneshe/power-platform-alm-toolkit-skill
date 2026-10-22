@@ -16,6 +16,10 @@ All notable changes to this project are documented here. The format follows [Kee
 - Live agents: the allow-list guidance now names the **Dataverse CLI** client (app ID `0c412cc3-0dd6-449b-987f-05b053db9457`) that Claude Code and Claude Desktop use through the proxy, plus the one-time tenant consent. It also fires when tools don't load or fail with a generic error, because the proxy reports the 403 only as "An error occurred" (found in a live test against a real environment).
 - Scheduled governance check: pre-approves only the Dataverse MCP read tools (`read_query`, `describe`, `search`) with `--allowedTools`. Unattended runs can't approve tool calls, so the checks previously couldn't query Dataverse, and write tools now stay blocked at the tool layer. Environment names are validated because they become part of the tool names.
 
+- Live agents: `read_query` returns at most 20 rows and rejects a larger `TOP`, and `OFFSET … FETCH` is silently ignored (all confirmed live). Recipes that used `TOP 50`/`TOP 500` failed on first try. The agents and recipes now count first, sample at most 20 rows, and page by primary key when every row is needed; role drift pages by `systemuserroleid`.
+- `pp-governance-agent` mode 2 queried the `connection` table, which in Dataverse links two business records and holds no Power Platform connections. It now reads `connectionreference` and `connectioninstance`, treats a reference with a `connectionid` but no tracked instance as not verifiable from Dataverse (with a read-only `Get-AdminPowerAppConnection` check), and never concludes an environment has no connections.
+- Live agents: when `describe` fails with an internal error, fall back to `search` or a `TOP 1` query instead of stopping. Data-ops and governance fallbacks fill in known values (such as the environment URL) instead of placeholders.
+
 ### Changed
 - `pp-governance-agent` cost note: the license exemption covers Dynamics 365 data only, and the per-tool billing rates are stated.
 

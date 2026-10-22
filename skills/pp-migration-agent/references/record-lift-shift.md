@@ -52,13 +52,23 @@ also in scope, don't run them as independent single-entity jobs. Instead:
 Call `describe` on the source environment's connection first, then build the read-only query:
 
 ```sql
-SELECT TOP 500 accountid, name, emailaddress1, createdon
+SELECT COUNT(*) AS matching_count
 FROM account
 WHERE createdon >= '2026-01-01'
 ```
 
-Always include a `TOP` clause (see `pp-data-ops-agent`'s `references/data-ops-recipes.md` for the
-same guidance on choice/lookup columns). Present the row count and a sample before going further.
+```sql
+SELECT TOP 20 accountid, name, emailaddress1, createdon
+FROM account
+WHERE createdon >= '2026-01-01'
+ORDER BY accountid
+```
+
+Present the row count and this sample before going further. Live, `read_query` returns at most 20
+rows and rejects a larger `TOP`; to collect every source row, repeat the second query with
+`AND accountid > '<last accountid seen>'` until a page returns fewer than 20 rows (`OFFSET … FETCH`
+is silently ignored, so never page with it). For large sets, offer the generated script instead.
+See `pp-data-ops-agent`'s `references/data-ops-recipes.md` for guidance on choice/lookup columns.
 
 ### Gather (target) — check for existing matches
 

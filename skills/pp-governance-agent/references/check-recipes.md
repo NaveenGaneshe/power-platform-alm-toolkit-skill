@@ -5,18 +5,25 @@ target environment before running the `read_query` shown — these are the stand
 table/column names, not guesses, but confirm before relying on them, per `SKILL.md`'s workflow
 step 2.
 
+`read_query` returns at most 20 rows per call; a `TOP` above 20 is rejected, and `OFFSET … FETCH`
+is silently ignored. For any gather query that can return more, count first, then page by the
+key named in that mode: add `TOP 20` and `ORDER BY <key>`, then repeat with
+`WHERE <key> > '<last key seen>'` until a page returns fewer than 20 rows.
+
 ## Mode 1: Role drift audit
 
 **Gather** (once per named environment, via that environment's Dataverse MCP connection):
 
 ```sql
-SELECT u.fullname, u.domainname, u.isdisabled, r.name AS role_name
+SELECT TOP 20 ur.systemuserroleid, u.fullname, u.domainname, u.isdisabled, r.name AS role_name
 FROM systemuserroles AS ur
 INNER JOIN systemuser AS u ON ur.systemuserid = u.systemuserid
 INNER JOIN role AS r ON ur.roleid = r.roleid
 WHERE u.isdisabled = 0
-ORDER BY u.fullname
+ORDER BY ur.systemuserroleid
 ```
+
+Page by `ur.systemuserroleid` (see above); sort by user name yourself when building the report.
 
 **Compare:** build one row per (user, role) pair found in any environment, with a column per
 environment showing present/absent. A user+role combination present in one environment and
@@ -39,22 +46,37 @@ during the same audit needs its own separate confirmation (see `SKILL.md` Safety
 **Gather:**
 
 ```sql
-SELECT connectionreferencelogicalname, connectionreferencedisplayname, connectionid, connectorid
+SELECT connectionreferenceid, connectionreferencelogicalname, connectionreferencedisplayname,
+       connectionid, connectorid, statecode
 FROM connectionreference
 ```
 
 ```sql
-SELECT connectionid, connectorid, statecode
-FROM connection
+SELECT connectionreferenceid, connectioninternalid, connectionstatus, statecode
+FROM connectioninstance
 ```
 
-**Compare:** for each `connectionreference`, check whether its `connectionid` matches a row in
-`connection` with `statecode = 0` (enabled). Three outcomes:
-- `connectionid` is null/empty → reference was never bound to a connection in this environment.
-- `connectionid` doesn't match any row in `connection` → stale, likely carried over from the
-  source environment on import.
-- Matches a `connection` row but that connection's `statecode` isn't 0 → connection itself is
-  disabled.
+Page both by their `connectionreferenceid` if there are more than 20. Don't use the `connection`
+table: in Dataverse it links two business records and has nothing to do with Power Platform
+connections. Power Platform connections live in Power Platform's own connection service, outside
+Dataverse. `connectioninstance` holds a row only for connections Dataverse tracks for a
+connection reference, so a missing row, or an empty table, never proves a connection doesn't
+exist. Never report "this environment has no connections" from these queries.
+
+**Compare:** for each `connectionreference`, four outcomes:
+- `connectionid` is null/empty → **broken**: the reference was never bound to a connection in this
+  environment. This is certain from Dataverse alone.
+- A `connectioninstance` row for this reference has `statecode` ≠ 0, or a `connectionstatus` that
+  reports an error → **broken**: quote `connectionstatus` as-is rather than interpreting it.
+- A `connectioninstance` row with `statecode = 0` and no error in `connectionstatus` → **healthy**.
+- `connectionid` is set but there's no `connectioninstance` row → **not verifiable from Dataverse**.
+  Don't call it broken or healthy. Give the user this read-only check (needs the
+  `Microsoft.PowerApps.Administration.PowerShell` module and environment admin rights), using the
+  `shared_…` connector name from `connectorid`, and compare the connection names it returns with
+  `connectionid`:
+  `Get-AdminPowerAppConnection -EnvironmentName <environment-id> -ConnectorName <shared_connector_name>`.
+  No match means the reference is stale, most likely carried over from the source environment on
+  import.
 
 Also check for an active unmanaged layer on the connection reference's solution component, per
 the confirmed gap in `references/admin-api-patterns.md` — this cannot be checked automatically;
@@ -85,7 +107,16 @@ WHERE category = 5
 (`category = 5` is cloud flows; `category = 0` is classic workflows, out of scope for this check.)
 
 **Compare:** a flow with `statecode = 0` (off) is a candidate. Cross-reference its connection
-references against mode 2's findings: if any are broken, that's the root cause. If all of its
+references against mode 2's findings. `workflow.connectionreferences` is often empty, so match
+through the flow definition instead, once per broken reference:
+
+```sql
+SELECT TOP 20 workflowid, name
+FROM workflow
+WHERE category = 5 AND clientdata LIKE '%<connectionreferencelogicalname>%'
+```
+
+Then: if any are broken, that's the root cause. If all of its
 connection references check out fine and it's still off, the cause is unknown from these tools
 alone — report it as "off, cause not determined from available data" rather than guessing.
 

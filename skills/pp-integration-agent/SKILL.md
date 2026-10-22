@@ -53,7 +53,8 @@ Since December 15, 2025, Dataverse MCP tool calls from clients outside Copilot S
 
 - Let the query do the work: one `read_query` with `COUNT(*)` or a filter beats many small reads, and never fetch rows just to count them yourself.
 - Call `describe` once per table per conversation and reuse what it returned.
-- Always use `TOP`, sized to what the answer actually needs.
+- `read_query` returns at most 20 rows. A `TOP` above 20 is rejected with an error, and `OFFSET … FETCH` is silently ignored (it returns the first rows again), so never page with it. Count first with `COUNT(*)` and show at most 20 rows as the sample. When you need every matching row live (for example, the IDs for a bulk change), page by key: `ORDER BY` the primary id column, then repeat with `WHERE <id column> > '<last id seen>'` until a page returns fewer than 20 rows. If that would take many pages, say so and offer the generated script instead, which has no such cap.
+- If `describe` fails with an internal error (seen live: "Sequence contains more than one matching element"), don't stop: confirm the columns with `search`, or with a `TOP 1` `read_query` on just those columns, and say the schema check fell back.
 - Don't re-run a read to re-show results you already have.
 
 Fewer calls never means skipping a safety step: the schema check, the preview and the confirmation gate still happen.
