@@ -39,7 +39,10 @@ the three modes this skill covers — if they do, that's a new check, not this s
 ## Cost note
 
 Dataverse MCP tool calls from non-Copilot-Studio clients (including Claude Code, Claude Desktop,
-and GitHub Copilot) are billed per Microsoft's published rates unless the caller has a qualifying
-Dynamics 365 Premium or Microsoft 365 Copilot license. Mention this to the user the first time a
-session runs a check that will make several tool calls (e.g. one `read_query` per environment in
-a multi-environment role-drift audit), so they aren't surprised by it.
+and GitHub Copilot) are billed in Copilot Credits, since December 15, 2025. A Dynamics 365 Premium
+or Microsoft 365 Copilot license waives the charge, but only for Dynamics 365 data. `search_data`
+bills at the Tenant graph grounding rate; every other tool, including the metadata `search`, at
+the "Text and generative AI tools (basic)" per-10-responses rate. Mention this to the user the
+first time a session runs a check that will make several tool calls (e.g. one `read_query` per
+environment in a multi-environment role-drift audit), so they aren't surprised by it, and follow
+"Keep MCP calls lean" in `SKILL.md`.

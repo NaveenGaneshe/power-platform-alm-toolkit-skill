@@ -12,6 +12,24 @@ Four workflows cover the toolkit. Adapt names and inputs; keep the structure. Al
 
 Each environment can point at a different tenant or app registration. Because names are identical, the same workflow code deploys anywhere: that is the "environment-agnostic" guarantee.
 
+### When environments span tenants
+
+The workflows below need no changes to deploy across tenants (a vendor's dev tenant into the corporate production tenant, or a subsidiary after an acquisition). Every auth step reads `PP_TENANT_ID`, `PP_APP_ID` and `PP_ENV_URL` from the GitHub environment, so `dev` can live in one tenant and `production` in another. Native Power Platform pipelines and Dataverse Git integration can't do this: Microsoft lists cross-tenant as unsupported for both and recommends GitHub or Azure DevOps. What changes is the setup, once per tenant:
+
+| In each tenant | Why |
+|---|---|
+| An app registration in that tenant, added as an application user (least-privilege role) in each of its environments | A service principal only exists in its own tenant, so `PP_APP_ID` and `PP_TENANT_ID` differ per GitHub environment. |
+| A federated credential on that app registration for `repo:<org>/<repo>:environment:<name>`, one per GitHub environment that deploys into the tenant | OIDC trust belongs to one app registration, and each tenant's app should trust only the environments that target it. (Or a `PP_CLIENT_SECRET` per environment, if OIDC isn't an option.) |
+| Connections created in the target tenant by an account or service principal from that tenant, with their IDs stored as that environment's `${TOKEN}` values | A connection ID from tenant A means nothing in tenant B. `New-DeploymentSettings.ps1` fails on any unresolved token, so a missing connection stops the deploy instead of importing an empty reference. |
+| Environment variable values for that tenant | URLs (SharePoint sites, API endpoints) usually differ per tenant. They're already per-environment tokens. |
+
+Rules:
+
+- **Never rewrite tenant IDs or URLs inside the solution artifact.** Anything that differs between tenants belongs in an environment variable or connection reference, which the deployment settings fill per environment. If a flow or app hardcodes a tenant-specific URL, move it into an environment variable in dev. Don't patch the exported zip or the unpacked XML in the pipeline.
+- **Tenant isolation affects the deployed apps and flows, not the pipeline.** The pipeline's own `pac` sign-in isn't subject to Power Platform tenant isolation. That setting governs connectors that use Microsoft Entra ID authentication in canvas apps and flows. If a deployed flow or app connects to a resource in the *other* tenant and either tenant has isolation on, the import succeeds but the connection fails at run time. Before go-live, ask both tenant admins for an allow-list entry in the direction you need (Power Platform admin center → **Security** → **Identity and access** → **Tenant isolation**).
+- **Keep the solution unique name and publisher identical in every tenant**, so later imports upgrade the existing solution instead of colliding with it.
+- **Solution checker runs with the `dev` credential**, so it runs in the dev tenant. That's fine: it checks the artifact, not the target environment.
+
 Versioning rule: `major.minor` from `solutions/<Name>/module.json` → full version `major.minor.<run_number>.<run_attempt>`.
 
 ---

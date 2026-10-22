@@ -256,6 +256,8 @@ Same idea — describe what you need, no need to name the skill — but these fo
 
 Each one tells you plainly what it needs (a Dataverse MCP connection, `pac`/PowerShell, or neither) and what it can't do live before it does anything — see each skill's own `SKILL.md` for the full picture, or the "Skills in this repo" table above for a one-line summary of each.
 
+Two things to know before connecting the Dataverse MCP server: an admin has to allow your AI tool on each environment first (only Copilot Studio is allowed by default), and since December 15, 2025 Microsoft bills Dataverse MCP calls from tools other than Copilot Studio in Copilot Credits. The agents keep their calls few and warn you before a run that makes many. Setup steps and details are in the [user guide](docs/user-guide.md#how-to-get-a-good-result-on-the-first-ask).
+
 ---
 
 ## User guide and prompt library

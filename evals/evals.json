@@ -18,6 +18,12 @@
       "prompt": "Just the pipeline please. We have one solution, HRCore. I need GitHub Actions to export it from dev into git, then promote to UAT and prod. The SharePoint site URL environment variable is different in each environment, and there's a SharePoint connection reference. Prod must need a manager's approval.",
       "expected_output": "Scaled response focused on Part 3 (pipeline) with correct powerplatform-actions inputs, Both unpack, managed pack, versioning, deployment settings with per-environment injection for the env var and connection reference, uat and production GitHub environments with required reviewers; other parts brief or offered.",
       "files": []
+    },
+    {
+      "id": 4,
+      "prompt": "Our vendor builds our CaseMgmt solution in their own Microsoft 365 tenant. We need a GitHub Actions pipeline that takes it from their dev environment into our UAT and production, which are in our corporate tenant. There's a Dataverse connection reference and an environment variable for our support API URL. Production needs approval.",
+      "expected_output": "Uses the standard pipeline unchanged, with per-GitHub-environment PP_TENANT_ID/PP_APP_ID/PP_ENV_URL (dev = vendor tenant, uat/production = corporate tenant). Developer runbook covers an app registration plus application user plus federated credential in each tenant, and connections created in the corporate tenant with their IDs as that environment's variables. Notes tenant isolation applies to the deployed flows/apps' connectors, not the pipeline sign-in. Does not propose rewriting tenant IDs or URLs inside the solution artifact. Production gated by required reviewers.",
+      "files": []
     }
   ]
 }

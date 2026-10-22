@@ -44,6 +44,22 @@ These apply across all five skills:
    equivalent query, script, or runbook for you to run yourself instead of refusing. Connecting
    it (see [Installation](../README.md#installation)) gets you a live answer instead of a
    generated one next time.
+7. **Before connecting the Dataverse MCP server, check two things.**
+   - **An admin has to allow your AI tool.** By default each environment only lets Copilot
+     Studio use the Dataverse MCP server. A Power Platform admin turns on Claude, GitHub Copilot
+     or another tool per environment: Power Platform admin center → **Manage** →
+     **Environments** → the environment → **Settings** → **Product** → **Features** →
+     **Dataverse Model Context Protocol** → **Advanced Settings** → open the tool's record → set
+     **Is Enabled** to **Yes**. For Claude Code and Claude Desktop, the record is **Dataverse CLI**
+     (app ID `0c412cc3-0dd6-449b-987f-05b053db9457`), because they connect through Microsoft's
+     `@microsoft/dataverse` proxy. A tenant admin also grants that app consent once per tenant, by
+     opening `https://login.microsoftonline.com/<tenant-id>/adminconsent?client_id=0c412cc3-0dd6-449b-987f-05b053db9457`
+     and accepting.
+   - **Live calls cost Copilot Credits.** Since December 15, 2025, Microsoft bills Dataverse
+     MCP calls made from tools other than Copilot Studio. A Dynamics 365 Premium or Microsoft
+     365 Copilot license waives this, but only for Dynamics 365 data. The agents keep their
+     calls few and tell you before a run that will make many; the generated query/script path
+     makes no MCP calls at all.
 
 ## Per-skill notes
 

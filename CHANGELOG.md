@@ -4,6 +4,21 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+### Added
+- All four live agents: a "Keep MCP calls lean (they're billed)" section. Dataverse MCP calls from tools other than Copilot Studio have been billed in Copilot Credits since December 15, 2025, so the agents warn once before a high-volume run, aggregate in the query, reuse `describe` results and always use `TOP`, without skipping any safety step. They also explain the admin allow-list when the MCP server refuses the client.
+- `power-platform-alm-toolkit`: cross-tenant promotion guidance. "When environments span tenants" in `references/pipeline-template.md` covers the per-tenant app registration, federated credential and connections, tenant isolation, and why the solution artifact is never rewritten per tenant. Added a matching runbook setup step, a Part 3 pointer and self-check line in `SKILL.md`, and eval case 4. No workflow YAML changes: the existing template already reads tenant and app per GitHub environment.
+- Docs: the per-environment admin step to allow non-Copilot Studio clients on the Dataverse MCP server (user guide, README, scheduled governance check), plus a cost section for the scheduled check.
+
+### Fixed
+- Scheduled governance check: refuses to run in a public repository, because the report it posts as an issue names users, roles and connections.
+- Scheduled governance check: installs the skills before the run. Claude Code doesn't discover the repo's `skills/` folder, so the run previously went ahead without the skill.
+- Scheduled governance check: signs in with the `@microsoft/dataverse` proxy's own GitHub federated auth (`dataverse auth create --githubFederated`). The previous `--access-token` flag doesn't exist in the proxy (checked against v1.0.82), so the connect step would have failed. This also removes the Azure login and per-environment token steps. Setup step 3 now allows the service principal's app ID on each environment's MCP allowed-clients list.
+- Live agents: the allow-list guidance now names the **Dataverse CLI** client (app ID `0c412cc3-0dd6-449b-987f-05b053db9457`) that Claude Code and Claude Desktop use through the proxy, plus the one-time tenant consent. It also fires when tools don't load or fail with a generic error, because the proxy reports the 403 only as "An error occurred" (found in a live test against a real environment).
+- Scheduled governance check: pre-approves only the Dataverse MCP read tools (`read_query`, `describe`, `search`) with `--allowedTools`. Unattended runs can't approve tool calls, so the checks previously couldn't query Dataverse, and write tools now stay blocked at the tool layer. Environment names are validated because they become part of the tool names.
+
+### Changed
+- `pp-governance-agent` cost note: the license exemption covers Dynamics 365 data only, and the per-tool billing rates are stated.
+
 ## [0.1.0] - 2026-10-15
 
 ### Added

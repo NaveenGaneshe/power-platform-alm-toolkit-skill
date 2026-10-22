@@ -92,6 +92,19 @@ Read `references/legacy-to-dataverse.md` for the mapping and load recipe.
 
 Read-only steps (gather, describe, check) don't need a play-by-play of every tool call — narrate them in plain language with one clean result, not a transcript of raw commands or JSON ("Checking your environment... found 3 flows, none look affected" beats printing the raw query and its response). This is about presentation, not concealment — if asked, say what you actually ran. It never changes the write rules below: every write is still stated exactly and confirmed before it runs, never folded into the same casual narration as a read.
 
+## Keep MCP calls lean (they're billed)
+
+Since December 15, 2025, Dataverse MCP tool calls from clients outside Copilot Studio (Claude, GitHub Copilot and others) are billed in Copilot Credits. A Dynamics 365 Premium or Microsoft 365 Copilot license waives the charge, but only for Dynamics 365 data. Before a run that will make many calls (several environments, a large preview, a multi-table load), say so once, in one line, so the user isn't surprised. Then:
+
+- Let the query do the work: one `read_query` with `COUNT(*)` or a filter beats many small reads, and never fetch rows just to count them yourself.
+- Call `describe` once per table per conversation and reuse what it returned.
+- Always use `TOP`, sized to what the answer actually needs.
+- Don't re-run a read to re-show results you already have.
+
+Fewer calls never means skipping a safety step: the schema check, the preview and the confirmation gate still happen.
+
+If the Dataverse MCP server is configured but its tools don't show up, or fail with a generic error, the likely cause is the environment's allow-list: only Copilot Studio is enabled by default. Dataverse answers a client that isn't allowed with 403 Forbidden, but the proxy passes that on only as "An error occurred", so don't wait for an explicit refusal before raising this. Tell the user a Power Platform admin must enable it (Power Platform admin center → **Manage** → **Environments** → the environment → **Settings** → **Product** → **Features** → **Dataverse Model Context Protocol** → **Advanced Settings** → open the client → **Is Enabled** = **Yes**). Claude Code and Claude Desktop connect through the `@microsoft/dataverse` proxy, which signs in as the **Dataverse CLI** client (app ID `0c412cc3-0dd6-449b-987f-05b053db9457`), so that's the record to enable; a tenant admin must also grant that app one-time consent. GitHub Copilot has its own client record. Offer the no-MCP fallback in the meantime.
+
 ## Safety rules
 
 ### Backup and rollback (every mode, no exceptions)
