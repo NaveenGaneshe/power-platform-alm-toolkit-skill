@@ -8,11 +8,14 @@ this environment — table names in Dataverse SQL are singular logical names (`a
 
 ## Building a query (Mode 1 and the Mode 2 preview)
 
-Always include a `TOP` clause — Dataverse returns up to 5,000 rows for standard tables without
-one, which is rarely what a plain-language question actually wants:
+Always include a `TOP` clause of 20 or fewer. The Dataverse MCP server's `read_query` returns at
+most 20 rows and rejects a larger `TOP` with an error (`OFFSET … FETCH` is silently ignored, so
+don't page with it). Count first, show up to 20 rows as the sample, and page by primary key when
+you need every row (see "Keep MCP calls lean" in `SKILL.md`). Generated scripts that run over the
+TDS endpoint or Web API aren't capped this way.
 
 ```sql
-SELECT TOP 50 contactid, fullname, emailaddress1, createdon
+SELECT TOP 20 contactid, fullname, emailaddress1, createdon
 FROM contact
 WHERE emailaddress1 IS NULL
 ORDER BY createdon DESC

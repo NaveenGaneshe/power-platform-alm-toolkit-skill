@@ -62,7 +62,8 @@ If your team has the toolkit's Copilot Studio agent or Claude connected, you can
 ### One-time setup
 1. GitHub → Settings → Environments: create `dev`, `test`, `production` (add required reviewers on `production`).
 2. In each environment add variables `PP_ENV_URL`, `PP_APP_ID`, `PP_TENANT_ID` and secret `PP_CLIENT_SECRET` (or configure a federated credential for `repo:<org>/<repo>:environment:<name>` and skip the secret).
-3. <Module-specific setup: extra variables, solution import, connector connection, etc.>
+3. <Only if environments are in different tenants — otherwise delete this step:> **In each tenant**, repeat the setup separately: an app registration in that tenant, added as an application user in each of its environments, with a federated credential for every GitHub environment that deploys into it. Then set that GitHub environment's `PP_APP_ID` and `PP_TENANT_ID` to the values from *its* tenant. Create the connections the solution needs in the target tenant, signed in as someone from that tenant, and store their IDs as that environment's variables (a connection from another tenant won't work). If a flow or app calls a resource in the other tenant, ask both tenant admins whether Power Platform tenant isolation is on and, if it is, for an allow-list entry before go-live.
+4. <Module-specific setup: extra variables, solution import, connector connection, etc.>
 
 ### Run locally
 ```powershell

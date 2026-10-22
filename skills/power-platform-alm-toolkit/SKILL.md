@@ -71,6 +71,7 @@ Rules for the code, and why:
   - **Pack** (managed artifact from source, uploaded as a build artifact)
   - **Environment injection** (deployment settings generated per GitHub environment from `vars`/`secrets`)
   - **Deploy** (test → production, production behind a GitHub environment with required reviewers)
+- **Environments in different tenants** (a vendor's dev tenant, a subsidiary, an acquisition): the same YAML deploys across tenants because every auth step reads its tenant and app from the GitHub environment. Follow "When environments span tenants" in `references/pipeline-template.md` for the per-tenant app registration, federated credential and connections, and never rewrite tenant IDs or URLs inside the solution artifact.
 - If the module is an operation (not a solution), add its `workflow_dispatch` runbook workflow. That form is the citizen developer's control panel.
 - **Optional low-code trigger surface.** If the user wants an in-Power-Platform trigger instead of (or alongside) the GitHub Actions form, offer the Canvas App pattern in `references/low-code-frontend.md`: the app calls a Power Automate flow that fetches the GitHub token from Azure Key Vault and fires a `repository_dispatch` event, so the maker never sees or handles a secret, and the same validated pipeline runs underneath either trigger.
 
@@ -93,6 +94,7 @@ The blueprint is mandatory, but its depth should match the request. A one-off qu
 - Mutating operations: dry-run default, before-snapshot, batching, retry, summary, undo path in the runbook.
 - Multi-component toggles: dependency graph traced, parent→child for shutdown and child→parent for startup — not the other way around.
 - Production deploy is gated by a GitHub environment with reviewers.
+- Environments in different tenants: the developer runbook covers a per-tenant app registration, application user, federated credential and target-tenant connections, and nothing in the solution artifact is rewritten per tenant.
 - Operator inputs table uses plain language and covers every input in the `workflow_dispatch` block.
 
 ## References

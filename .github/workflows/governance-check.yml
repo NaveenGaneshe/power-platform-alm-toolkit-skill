@@ -3,6 +3,9 @@ name: Scheduled Governance Check
 # Runs the pp-governance-agent skill, read-only, against the Dataverse environments you list
 # below, then posts the report as a new GitHub issue. Setup for non-technical users:
 #
+#   0. Use a PRIVATE repository. The report names users, security roles and broken connections,
+#      and issues in a public repo are world-readable, so the first step refuses to run otherwise.
+#
 #   1. Add these repo secrets (Settings > Secrets and variables > Actions > Secrets):
 #        ANTHROPIC_API_KEY      - your Claude API key
 #        DATAVERSE_CLIENT_ID    - app registration (service principal) client id
@@ -17,15 +20,20 @@ name: Scheduled Governance Check
 #
 #   2. Add this repo variable (Settings > Secrets and variables > Actions > Variables):
 #        GOVERNANCE_ENVIRONMENTS = Production=https://contoso.crm.dynamics.com,UAT=https://contoso-uat.crm.dynamics.com
-#      Comma-separated name=url pairs. No file or YAML edits needed to add/remove an environment.
+#      Comma-separated name=url pairs. Names may use letters, digits, '-' and '_' only.
+#      No file or YAML edits needed to add/remove an environment.
 #
-#   3. Adjust the cron schedule below if 6am UTC daily doesn't suit you, or just use the
-#      "Run workflow" button on the Actions tab to run it on demand.
+#   3. In the Power Platform admin center, add the service principal's app ID (DATAVERSE_CLIENT_ID)
+#      to the Dataverse MCP allowed clients of each environment above (only Copilot Studio is
+#      allowed by default). Steps are in docs/scheduled-governance-check.md.
 #
-# One setup step this workflow can't do for you: the exact non-interactive/service-principal
-# auth flags for the Dataverse MCP server depend on the version of @microsoft/dataverse you have
-# installed. Check its own docs (`npx -y @microsoft/dataverse mcp --help`) and adjust the
-# "Connect Dataverse MCP" step's claude mcp add line to match before relying on this in production.
+#   4. Adjust the cron schedule below if 6am UTC daily doesn't suit you, or just use the
+#      "Run workflow" button on the Actions tab to run it on demand. Each run's Dataverse MCP
+#      calls are billed in Copilot Credits, so a less frequent schedule costs less.
+#
+# Sign-in uses Microsoft's @microsoft/dataverse proxy with GitHub federated auth
+# (`dataverse auth create --githubFederated`). The service principal's app ID must be on each
+# environment's Dataverse MCP allowed-clients list (step 3), or every MCP call fails with 403.
 
 on:
   schedule:
@@ -45,6 +53,13 @@ jobs:
   governance-check:
     runs-on: ubuntu-latest
     steps:
+      # The report names users, roles and broken connections; a public repo's issues are world-readable.
+      - name: Refuse to run in a public repository
+        if: ${{ !github.event.repository.private }}
+        run: |
+          echo "::error::This workflow posts a security report as a GitHub issue. Run it only in a private repository."
+          exit 1
+
       - uses: actions/checkout@v7
 
       - uses: actions/setup-node@v4
@@ -54,50 +69,47 @@ jobs:
       - name: Install Claude Code CLI
         run: npm install -g @anthropic-ai/claude-code
 
-      - name: Azure login (OIDC, no stored secret)
-        uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.DATAVERSE_CLIENT_ID }}
-          tenant-id: ${{ secrets.DATAVERSE_TENANT_ID }}
-          allow-no-subscriptions: true
+      # Claude Code only discovers skills under ~/.claude/skills (or .claude/skills), not this repo's skills/.
+      - name: Install the skills for Claude Code
+        run: ./scripts/install.sh --tool claude
 
-      - name: Acquire a read-only Dataverse token per environment
+      - name: Install Dataverse CLI (MCP proxy)
+        run: npm install -g @microsoft/dataverse
+
+      - name: Sign in and connect Dataverse MCP for each environment (OIDC, no stored secret)
         env:
           ENVIRONMENTS: ${{ vars.GOVERNANCE_ENVIRONMENTS }}
+          CLIENT_ID: ${{ secrets.DATAVERSE_CLIENT_ID }}
+          TENANT_ID: ${{ secrets.DATAVERSE_TENANT_ID }}
+          DATAVERSE_TELEMETRY_OPT_OUT: "1"
         run: |
           set -euo pipefail
           if [ -z "${ENVIRONMENTS:-}" ]; then
             echo "::error::Repo variable GOVERNANCE_ENVIRONMENTS is not set. See the comment at the top of this workflow file."
             exit 1
           fi
+          # Unattended runs can't approve tool calls, so pre-approve only read tools. Write tools stay
+          # unapproved and are refused, even if data in the environment tries to talk the model into one.
+          allowed="Skill,Read,Glob,Grep"
           IFS=',' read -ra PAIRS <<< "$ENVIRONMENTS"
           for pair in "${PAIRS[@]}"; do
             name="${pair%%=*}"
             url="${pair#*=}"
-            token=$(az account get-access-token --resource "$url" --query accessToken -o tsv)
-            echo "::add-mask::$token"
-            var_name="TOKEN_$(echo "$name" | tr -c 'A-Za-z0-9' '_')"
-            echo "$var_name=$token" >> "$GITHUB_ENV"
+            # The name becomes part of the MCP server and tool names, so keep it to safe characters.
+            if [[ ! "$name" =~ ^[A-Za-z0-9_-]+$ ]]; then
+              echo "::error::Environment name '$name' in GOVERNANCE_ENVIRONMENTS may only use letters, digits, '-' and '_'."
+              exit 1
+            fi
+            echo "Signing in to $name ($url) with GitHub OIDC"
+            # The proxy picks the saved profile whose environment matches the URL it is started with.
+            # Cleartext token caching is acceptable here: the runner is discarded after the job.
+            dataverse auth create --githubFederated --applicationId "$CLIENT_ID" --tenant "$TENANT_ID"               --environment "$url" --name "gov-$name" --accept-cleartext-caching
+            claude mcp add "dataverse-$name" -t stdio -e DATAVERSE_TELEMETRY_OPT_OUT=1 -- dataverse mcp "$url"
+            for tool in read_query describe search; do
+              allowed="$allowed,mcp__dataverse-${name}__${tool}"
+            done
           done
-
-      - name: Connect Dataverse MCP for each environment
-        env:
-          ENVIRONMENTS: ${{ vars.GOVERNANCE_ENVIRONMENTS }}
-        run: |
-          set -euo pipefail
-          IFS=',' read -ra PAIRS <<< "$ENVIRONMENTS"
-          for pair in "${PAIRS[@]}"; do
-            name="${pair%%=*}"
-            url="${pair#*=}"
-            var_name="TOKEN_$(echo "$name" | tr -c 'A-Za-z0-9' '_')"
-            token="${!var_name}"
-            echo "Connecting MCP server for $name ($url)"
-            # TODO: confirm this flag against your installed @microsoft/dataverse mcp version's
-            # own docs for accepting a pre-acquired bearer token -- this is the one piece this
-            # workflow can't verify for you.
-            claude mcp add "dataverse-$name" -t stdio -- npx -y @microsoft/dataverse mcp "$url" \
-              --access-token "$token"
-          done
+          echo "ALLOWED_TOOLS=$allowed" >> "$GITHUB_ENV"
 
       - name: Run governance check (read-only, no fixes)
         env:
@@ -107,6 +119,7 @@ jobs:
           set -euo pipefail
           names=$(echo "$ENVIRONMENTS" | tr ',' '\n' | cut -d= -f1 | paste -sd ', ')
           claude -p "Use the pp-governance-agent skill. Run all three checks (role drift, connection reference health, post-import flow health) against these environments: $names. Produce the markdown report only. This is a scheduled, unattended run -- do not propose, confirm, or apply any fix." \
+            --allowedTools "$ALLOWED_TOOLS" \
             --output-format json > governance-report.json
 
       - name: Extract report text
