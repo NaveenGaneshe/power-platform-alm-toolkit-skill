@@ -21,6 +21,7 @@ All notable changes to this project are documented here. The format follows [Kee
 - Live agents: when `describe` fails with an internal error, fall back to `search` or a `TOP 1` query instead of stopping. Data-ops and governance fallbacks fill in known values (such as the environment URL) instead of placeholders.
 
 ### Changed
+- README rewritten for end users (390 → 88 lines) with a header diagram (`docs/images/header.svg`). Install options moved to a new `docs/installation.md`, which also covers connecting the Dataverse MCP server; the toolkit's blueprint, generated output and prerequisites moved to the user guide; repository layout, releasing and roadmap moved to `CONTRIBUTING.md`.
 - `pp-governance-agent` cost note: the license exemption covers Dynamics 365 data only, and the per-tool billing rates are stated.
 
 ## [0.1.0] - 2026-10-15

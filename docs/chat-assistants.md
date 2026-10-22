@@ -22,7 +22,7 @@ Requires a ChatGPT plan that can create GPTs.
 5. **Capabilities:** turn on *Web search* (lets it check current docs) and *Code interpreter* (lets it produce downloadable files).
 6. Save. Choose *Only me*, *Anyone with the link*, or your workspace.
 
-> On ChatGPT desktop and Codex, you can also use the native skill. See the main README.
+> On ChatGPT desktop and Codex, you can also use the native skill. See the [installation guide](installation.md).
 
 ## Google Gemini (Gems)
 

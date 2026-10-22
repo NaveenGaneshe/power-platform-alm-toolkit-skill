@@ -1,0 +1,125 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="400" viewBox="0 0 1280 400" role="img" aria-labelledby="title desc">
+  <title id="title">Power Platform ALM Toolkit</title>
+  <desc id="desc">Five AI agent skills, ALM Toolkit, Data Ops, Migration, Governance and Integration, arranged around Dataverse inside Power Platform, connected through the Dataverse MCP server, the Web API, the pac CLI and connectors, and running in your AI tool.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0B1220"/>
+      <stop offset="1" stop-color="#15213F"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#2563EB" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#2563EB" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="db" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#0E7490"/>
+      <stop offset="0.5" stop-color="#22D3EE"/>
+      <stop offset="1" stop-color="#0E7490"/>
+    </linearGradient>
+    <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse">
+      <path d="M32 0H0V32" fill="none" stroke="#FFFFFF" stroke-opacity="0.035"/>
+    </pattern>
+  </defs>
+
+  <rect width="1280" height="400" fill="url(#bg)"/>
+  <rect width="1280" height="400" fill="url(#grid)"/>
+
+  <!-- Left: title -->
+  <g font-family="Segoe UI, Helvetica Neue, Helvetica, Arial, sans-serif">
+    <text x="56" y="118" fill="#7DD3FC" font-size="14" font-weight="600" letter-spacing="3">AGENT SKILLS FOR</text>
+    <text x="56" y="164" fill="#FFFFFF" font-size="38" font-weight="700">Power Platform</text>
+    <text x="56" y="208" fill="#FFFFFF" font-size="38" font-weight="700">ALM Toolkit</text>
+    <text x="56" y="250" fill="#A5B4CC" font-size="17">Ask in plain language. The agents work on</text>
+    <text x="56" y="274" fill="#A5B4CC" font-size="17">Dataverse and Power Platform, safely.</text>
+
+    <g font-size="12.5" font-weight="600">
+      <rect x="56" y="300" width="148" height="28" rx="14" fill="#0F2A44" stroke="#38BDF8" stroke-opacity="0.6"/>
+      <text x="130" y="318.5" fill="#BAE6FD" text-anchor="middle">Live via Dataverse MCP</text>
+      <rect x="214" y="300" width="160" height="28" rx="14" fill="#1F2437" stroke="#A78BFA" stroke-opacity="0.6"/>
+      <text x="294" y="318.5" fill="#DDD6FE" text-anchor="middle">Preview before any write</text>
+      <rect x="384" y="300" width="150" height="28" rx="14" fill="#2A2416" stroke="#FBBF24" stroke-opacity="0.6"/>
+      <text x="459" y="318.5" fill="#FDE68A" text-anchor="middle">Works without setup</text>
+    </g>
+  </g>
+
+  <!-- Right: platform ring with Dataverse at the centre -->
+  <circle cx="930" cy="205" r="150" fill="url(#glow)"/>
+  <circle cx="930" cy="205" r="110" fill="#0F1A33" stroke="#3B82F6" stroke-opacity="0.7" stroke-width="2"/>
+  <circle cx="930" cy="205" r="110" fill="none" stroke="#93C5FD" stroke-opacity="0.25" stroke-width="1" stroke-dasharray="3 7"/>
+
+  <!-- Connection lines: agent to platform -->
+  <g stroke-width="2" stroke-dasharray="6 6" fill="none">
+    <line x1="806" y1="86" x2="845" y2="138" stroke="#38BDF8" stroke-opacity="0.8"/>
+    <line x1="785" y1="205" x2="820" y2="205" stroke="#2DD4BF" stroke-opacity="0.8"/>
+    <line x1="806" y1="324" x2="845" y2="272" stroke="#FBBF24" stroke-opacity="0.8"/>
+    <line x1="1054" y1="86" x2="1015" y2="138" stroke="#A78BFA" stroke-opacity="0.8"/>
+    <line x1="1075" y1="205" x2="1040" y2="205" stroke="#E2E8F0" stroke-opacity="0.6"/>
+    <line x1="1054" y1="324" x2="1015" y2="272" stroke="#F472B6" stroke-opacity="0.8"/>
+  </g>
+
+  <!-- Dataverse database -->
+  <g>
+    <path d="M885 178 V230 A45 12 0 0 0 975 230 V178" fill="url(#db)"/>
+    <ellipse cx="930" cy="230" rx="45" ry="12" fill="none" stroke="#67E8F9" stroke-opacity="0.5"/>
+    <path d="M885 195 A45 12 0 0 0 975 195" fill="none" stroke="#CFFAFE" stroke-opacity="0.45"/>
+    <path d="M885 212 A45 12 0 0 0 975 212" fill="none" stroke="#CFFAFE" stroke-opacity="0.45"/>
+    <ellipse cx="930" cy="178" rx="45" ry="12" fill="#67E8F9"/>
+  </g>
+  <g font-family="Segoe UI, Helvetica Neue, Helvetica, Arial, sans-serif" text-anchor="middle">
+    <text x="930" y="266" fill="#FFFFFF" font-size="15" font-weight="700">Dataverse</text>
+    <rect x="832" y="85" width="196" height="24" rx="12" fill="#13254A" stroke="#3B82F6" stroke-opacity="0.8"/>
+    <text x="930" y="101.5" fill="#BFDBFE" font-size="11.5" font-weight="600">Power Apps · Power Automate</text>
+    <rect x="832" y="301" width="196" height="24" rx="12" fill="#13254A" stroke="#3B82F6" stroke-opacity="0.8"/>
+    <text x="930" y="317.5" fill="#BFDBFE" font-size="11.5" font-weight="600">Copilot Studio · Solutions</text>
+    <text x="930" y="146" fill="#7DD3FC" font-size="10.5" font-weight="600" letter-spacing="2.5">POWER PLATFORM</text>
+  </g>
+
+  <!-- Line labels -->
+  <g font-family="Segoe UI, Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10.5" font-weight="600" fill="#94A3B8">
+    <text x="818" y="122" text-anchor="end">Web API</text>
+    <text x="790" y="196">MCP</text>
+    <text x="818" y="296" text-anchor="end">pac CLI</text>
+    <text x="1042" y="122">MCP</text>
+    <text x="1070" y="196" text-anchor="end">skills</text>
+    <text x="1042" y="296">connectors</text>
+  </g>
+
+  <!-- Agent pills -->
+  <g font-family="Segoe UI, Helvetica Neue, Helvetica, Arial, sans-serif">
+    <g>
+      <rect x="640" y="39" width="190" height="48" rx="24" fill="#111D36" stroke="#38BDF8" stroke-width="1.5"/>
+      <circle cx="664" cy="63" r="6" fill="#38BDF8"/>
+      <text x="680" y="59" fill="#FFFFFF" font-size="14" font-weight="700">ALM Toolkit</text>
+      <text x="680" y="76" fill="#94A3B8" font-size="11">pipelines and scripts</text>
+    </g>
+    <g>
+      <rect x="595" y="181" width="190" height="48" rx="24" fill="#111D36" stroke="#2DD4BF" stroke-width="1.5"/>
+      <circle cx="619" cy="205" r="6" fill="#2DD4BF"/>
+      <text x="635" y="201" fill="#FFFFFF" font-size="14" font-weight="700">Data Ops</text>
+      <text x="635" y="218" fill="#94A3B8" font-size="11">queries and bulk changes</text>
+    </g>
+    <g>
+      <rect x="640" y="323" width="190" height="48" rx="24" fill="#111D36" stroke="#FBBF24" stroke-width="1.5"/>
+      <circle cx="664" cy="347" r="6" fill="#FBBF24"/>
+      <text x="680" y="343" fill="#FFFFFF" font-size="14" font-weight="700">Migration</text>
+      <text x="680" y="360" fill="#94A3B8" font-size="11">environments and records</text>
+    </g>
+    <g>
+      <rect x="1030" y="39" width="190" height="48" rx="24" fill="#111D36" stroke="#A78BFA" stroke-width="1.5"/>
+      <circle cx="1054" cy="63" r="6" fill="#A78BFA"/>
+      <text x="1070" y="59" fill="#FFFFFF" font-size="14" font-weight="700">Governance</text>
+      <text x="1070" y="76" fill="#94A3B8" font-size="11">roles, connections, flows</text>
+    </g>
+    <g>
+      <rect x="1075" y="181" width="190" height="48" rx="24" fill="#1A2236" stroke="#E2E8F0" stroke-opacity="0.7" stroke-width="1.5" stroke-dasharray="4 3"/>
+      <circle cx="1099" cy="205" r="6" fill="#E2E8F0"/>
+      <text x="1115" y="201" fill="#FFFFFF" font-size="14" font-weight="700">Your AI tool</text>
+      <text x="1115" y="218" fill="#94A3B8" font-size="11">Claude · Copilot · Codex</text>
+    </g>
+    <g>
+      <rect x="1030" y="323" width="190" height="48" rx="24" fill="#111D36" stroke="#F472B6" stroke-width="1.5"/>
+      <circle cx="1054" cy="347" r="6" fill="#F472B6"/>
+      <text x="1070" y="343" fill="#FFFFFF" font-size="14" font-weight="700">Integration</text>
+      <text x="1070" y="360" fill="#94A3B8" font-size="11">external platforms</text>
+    </g>
+  </g>
+</svg>

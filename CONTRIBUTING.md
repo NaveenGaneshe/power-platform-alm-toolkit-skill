@@ -37,6 +37,43 @@ CI runs all of these on Windows, macOS and Linux.
 2. Run a few prompts from `evals/evals.json` and `examples/prompts.md` in a fresh session.
 3. In the pull request, paste a short before/after excerpt of the part of the output your change affects.
 
+## Repository layout
+
+```text
+.
+├── skills/                          # every skill; each folder is installed on its own
+│   ├── power-platform-alm-toolkit/  #   generates ALM code and pipelines (assets/Dataverse.psm1 is tested)
+│   ├── pp-data-ops-agent/           #   queries and bulk changes, live or generated
+│   ├── pp-governance-agent/         #   role drift, connection reference and flow health
+│   ├── pp-migration-agent/          #   environment copy, tenant migration, record and legacy moves
+│   └── pp-integration-agent/        #   external platform connectors and sync (assets/IdempotentSync.psm1)
+├── scripts/                         # install.sh / install.ps1, validate.py, check_templates.py, build.py
+├── tests/                           # Pester tests, HTTP fully mocked
+├── docs/                            # user guide, installation, chat assistants, scheduled check, publishing
+├── examples/prompts.md              # prompt library
+├── evals/                           # evaluation prompts, one file per skill
+└── .github/workflows/               # CI, release, scheduled governance check
+```
+
+Each skill folder holds `SKILL.md` (instructions and trigger description), `references/` (detail
+loaded only when needed) and `LICENSE.txt`.
+
+## Releasing
+
+Bump `metadata.version` in `SKILL.md`, update `CHANGELOG.md`, then publish a GitHub release with a
+matching tag (for example `v0.2.0`). The release workflow builds and attaches each skill's zip, the
+single-file bundles, the chat instructions and checksums.
+
+## Roadmap
+
+- [ ] Evaluation runs across the prompts in `evals/` with published results
+- [ ] Ready-made reference modules (data dictionary, flow on/off, role sync) in a companion `pp-ops-toolkit` repo
+- [ ] Azure DevOps pipeline variants
+- [ ] Copilot Studio agent template that calls the toolkit's runbook workflows from natural language
+- [ ] Power Pages and Dataverse elastic-table patterns
+
+Ideas welcome: [open an issue](https://github.com/NaveenGaneshe/power-platform-alm-toolkit-skill/issues).
+
 ## Pull requests
 
 - One topic per PR. Update `CHANGELOG.md` under *Unreleased*.

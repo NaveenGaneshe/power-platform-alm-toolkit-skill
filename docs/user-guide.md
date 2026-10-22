@@ -3,7 +3,7 @@
 This repo ships five Agent Skills. One generates code for you to commit and run later. Four act
 live, right now, in the conversation (or generate a ready-to-run equivalent if they can't act
 live yet). This guide is about how to talk to them so you get a good result on the first try —
-install instructions are in the [README](../README.md#installation); the full prompt library is
+install instructions are in the [installation guide](installation.md); the full prompt library is
 in [`examples/prompts.md`](../examples/prompts.md).
 
 ## The one-paragraph mental model
@@ -42,7 +42,7 @@ These apply across all five skills:
    trying an agent — ask anyway. `pp-data-ops-agent`, `pp-governance-agent`,
    `pp-migration-agent`'s record/legacy modes, and `pp-integration-agent` will all generate the
    equivalent query, script, or runbook for you to run yourself instead of refusing. Connecting
-   it (see [Installation](../README.md#installation)) gets you a live answer instead of a
+   it (see the [installation guide](installation.md#connect-to-dataverse-for-live-answers-optional)) gets you a live answer instead of a
    generated one next time.
 7. **Before connecting the Dataverse MCP server, check two things.**
    - **An admin has to allow your AI tool.** By default each environment only lets Copilot
@@ -70,6 +70,52 @@ These apply across all five skills:
   repo/pipeline → runbooks) scaled to how much you asked for.
 - "Let it write files" — in Claude Code, Codex, Copilot agent mode, or Cursor, ask it to create
   the files directly in your toolkit repo rather than pasting them yourself.
+
+**The four-part blueprint.** Every module request is answered in the same structure:
+
+| Part | What you get |
+|---|---|
+| **1. Core Operational Capability Mapping** | The operation classified into one of four categories, plus where it runs, the identity it runs as, how people trigger it, and its **blast radius** (what changes, the worst case, how to undo). |
+| **2. Extended Solution Architecture & Schemas** | Complete config and schema files (Custom API definitions, deployment settings, custom connector OpenAPI, PCF manifests, module manifests) and PowerShell 7 / OData / FetchXML code. |
+| **3. Repository Directory Structure & ALM Pipelines** | Where each file lives, and GitHub Actions that export, unpack, validate, version, pack, inject environment settings, deploy to test, wait for approval and deploy to production. Covers environments in different tenants too. |
+| **4. End-User & Developer Runbooks** | A README section for operators (what each field means, which button to press, how to read results, how to undo) and for developers (setup, local runs, tests). |
+
+The four categories are **Data & Schema Management** (queries, bulk updates, data dictionaries,
+schema migrations), **Access & Profile Administration** (user sync, security roles, audits),
+**Automation & Workflow Governance** (turning flows and plug-in steps on and off, telemetry) and
+**Environment Operations** (solution packaging, dependency maps, multi-environment sync).
+
+**Safe by default.** Generated operations preview what would change and change nothing until an
+operator unticks *Test run* and types `APPLY`. Records are saved before they change, so a run can
+be undone. Batching respects Dataverse service-protection limits. Secrets come from GitHub
+environment secrets or secretless OIDC sign-in, never from files. Production waits for approval
+from required reviewers.
+
+**What a generated toolkit looks like.** Modules follow one repository layout, so a toolkit built
+over months still feels like one product:
+
+```text
+pp-ops-toolkit/
+├── .github/workflows/
+│   ├── solution-export.yml            # Dev → pull request (unpack managed + unmanaged)
+│   ├── solution-build-deploy.yml      # lint, test, version, pack, check → test → approved prod
+│   ├── _reusable-import-solution.yml  # per-environment settings injection + import
+│   └── op-<module>.yml                # the operator's "Run workflow" form
+├── shared/scripts/                    # Dataverse.psm1, New-DeploymentSettings.ps1
+├── solutions/<Solution>/              # unpacked solution + module.json + settings template
+└── modules/<category>/<module>/       # scripts, schemas, connector, pcf, tests, README runbook
+```
+
+Operators run each operation from GitHub (**Actions → Run: <name> → Run workflow**) through a
+simple form: which environment, a *Test run* toggle that is on by default, the module's own
+fields, and a confirm box where they type `APPLY` to make real changes.
+
+**What the generated automation needs.** The skill itself needs only a supported AI tool. The code
+it generates expects Power Platform environments with Dataverse; a Microsoft Entra ID app
+registration added as an application user in each environment, with a least-privilege role; a
+GitHub repository with environments (`dev`, `test`, `production`) holding `PP_ENV_URL`,
+`PP_APP_ID`, `PP_TENANT_ID` and either `PP_CLIENT_SECRET` or a federated credential; and, for local
+runs, PowerShell 7.2+ and the Power Platform CLI.
 
 ### `pp-data-ops-agent` (live queries and bulk changes)
 
@@ -114,5 +160,5 @@ These apply across all five skills:
 
 Every agent's self-check includes "did I say what I was about to do before doing it, and wait
 for confirmation on anything that writes." If an agent seems to have skipped that, that's a bug
-worth reporting — see [Contributing, security and license](../README.md#contributing-security-and-license)
-in the README.
+worth reporting: open an issue as described in [CONTRIBUTING.md](../CONTRIBUTING.md), or for a
+security problem, report it privately as described in [SECURITY.md](../SECURITY.md).
