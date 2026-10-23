@@ -9,6 +9,8 @@
 [![Agent Skills](https://img.shields.io/badge/format-Agent%20Skills%20(SKILL.md)-6f42c1)](https://agentskills.io/specification)
 ![Status](https://img.shields.io/badge/status-preview%20v0.1.0-orange)
 
+[![M8ven Score](https://m8ven.ai/badge/mcp/naveenganeshe-power-platform-alm-toolkit-skill-5yy7lq?v=9ed3e849ec69595642b134954c7a5ff0)](https://m8ven.ai/mcp/naveenganeshe-power-platform-alm-toolkit-skill-5yy7lq?s=readme) 
+
 **Five AI agents that turn your assistant into a careful Power Platform expert.** Ask in plain
 language, in Claude, GitHub Copilot, Codex, Cursor, Gemini or a chat assistant. They query your
 Dataverse data, audit your environments, move and connect your data, and build your ALM pipelines.
@@ -145,7 +147,7 @@ the steps.
 - [Contributing](CONTRIBUTING.md): repository layout, local checks and how to propose changes.
 
 
-[![M8ven Score](https://m8ven.ai/badge/mcp/naveenganeshe-power-platform-alm-toolkit-skill-5yy7lq?v=9ed3e849ec69595642b134954c7a5ff0)](https://m8ven.ai/mcp/naveenganeshe-power-platform-alm-toolkit-skill-5yy7lq?s=readme) 
+
 
 ## Good to know
 
