@@ -144,6 +144,9 @@ the steps.
 - [Scheduled governance check](docs/scheduled-governance-check.md): the governance checks every night, as a GitHub issue.
 - [Contributing](CONTRIBUTING.md): repository layout, local checks and how to propose changes.
 
+
+[![M8ven Score](https://m8ven.ai/badge/mcp/naveenganeshe-power-platform-alm-toolkit-skill-5yy7lq?v=9ed3e849ec69595642b134954c7a5ff0)](https://m8ven.ai/mcp/naveenganeshe-power-platform-alm-toolkit-skill-5yy7lq?s=readme) 
+
 ## Good to know
 
 This is a community project. It is not affiliated with, endorsed by, or supported by Microsoft,
